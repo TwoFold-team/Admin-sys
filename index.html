@@ -76,6 +76,10 @@ th,td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:right}
 <label>الاسم</label><input id="nName">
 <label>الموبايل</label><input id="nPhone">
 <label>الكود</label><input id="nCode" placeholder="سيبه فاضي يتولد">
+<label>الجنس</label><select id="nGender"><option value="boy">Boy</option><option value="girl">Girl</option></select>
+<label>الوزن كجم</label><input id="nW" type="number">
+<label>الطول سم</label><input id="nH" type="number">
+<label>السن</label><input id="nA" type="number">
 <label>الخطة</label><select id="nPlan"><option value="beginner">مبتدئ</option><option value="ppl">PPL</option><option value="glutes">Glute Builder</option></select>
 <label>ملاحظة</label><textarea id="nNote" rows="3"></textarea>
 <button class="btn" style="margin-top:12px" onclick="addSub()">تسجيل الاشتراك</button>
@@ -83,7 +87,19 @@ th,td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:right}
 </div>
 <div class="page" id="list">
 <h1>المشتركين</h1>
-<div class="card" style="overflow:auto"><table><thead><tr><th>الاسم</th><th>الهاتف</th><th>الكود</th><th>واتساب</th><th>تحكم</th></tr></thead><tbody id="listRows"></tbody></table></div>
+<div class="card" style="overflow:auto"><table><thead><tr><th>الاسم</th><th>الهاتف</th><th>الكود</th><th>بيانات</th><th>واتساب</th><th>تحكم</th></tr></thead><tbody id="listRows"></tbody></table></div>
+<div class="card" id="editBox" style="display:none;max-width:520px;margin-top:12px">
+<h3>تعديل بيانات المشترك</h3>
+<input type="hidden" id="eId">
+<label>الاسم</label><input id="eName">
+<label>الموبايل</label><input id="ePhone">
+<label>الكود</label><input id="eCode">
+<label>الجنس</label><select id="eGender"><option value="boy">Boy</option><option value="girl">Girl</option></select>
+<label>الوزن</label><input id="eW" type="number">
+<label>الطول</label><input id="eH" type="number">
+<label>السن</label><input id="eA" type="number">
+<button class="btn" style="margin-top:10px" onclick="saveEdit()">حفظ التعديل</button>
+</div>
 </div>
 <div class="page" id="systems">
 <h1>الأنظمة والتمارين</h1>
@@ -186,7 +202,7 @@ function paint(){
   const db=load();
   cAll.textContent=db.subs.length; cLive.textContent=db.subs.filter(live).length; cOn.textContent=db.subs.filter(s=>s.active!==false).length; cDel.textContent=(db.deleted||[]).length;
   dashRows.innerHTML=db.subs.map(s=>"<tr><td>"+esc(s.name)+"</td><td>"+esc(s.phone)+"</td><td>"+esc(s.code)+"</td><td class='"+(s.active===false?"off":"ok")+"'>"+(s.active===false?"ملغي":"شغال")+"</td></tr>").join("")||"<tr><td colspan='4'>لا يوجد</td></tr>";
-  listRows.innerHTML=db.subs.map(s=>"<tr><td>"+esc(s.name)+"</td><td>"+esc(s.phone)+"</td><td><b>"+esc(s.code)+"</b></td><td><a class='wa' target='_blank' href='"+waHref(s.phone,"أهلاً "+(s.name||"")+" تم الاشتراك في GymHub. كودك: "+s.code)+"'></a></td><td class='row'><button class='btn ghost' onclick=\"toggle('"+s.id+"')\">"+(s.active===false?"تشغيل":"إلغاء")+"</button><button class='btn bad' onclick=\"delSub('"+s.id+"')\">حذف</button></td></tr>").join("")||"<tr><td colspan='5'>لا يوجد</td></tr>";
+  listRows.innerHTML=db.subs.map(s=>"<tr><td>"+esc(s.name)+"</td><td>"+esc(s.phone)+"</td><td><b>"+esc(s.code)+"</b></td><td>"+esc((s.gender||"-")+" / "+(s.weight||"-")+"كجم / "+(s.height||"-")+"سم / "+(s.age||"-"))+"</td><td><a class='wa' target='_blank' href='"+waHref(s.phone,"أهلاً "+(s.name||"")+" تم الاشتراك في GymHub. كودك: "+s.code)+"'></a></td><td class='row'><button class='btn ghost' onclick=\"editSub('"+s.id+"')\">تعديل</button><button class='btn ghost' onclick=\"toggle('"+s.id+"')\">"+(s.active===false?"تشغيل":"إلغاء")+"</button><button class='btn bad' onclick=\"delSub('"+s.id+"')\">حذف</button></td></tr>").join("")||"<tr><td colspan='6'>لا يوجد</td></tr>";
   ["brandName","brandSub","loginTitle","loginDesc","footerNote","credit","imgGym","imgHome","imgUpper","imgLower","imgRest","ahmedWa","ahmedIg","ahmedTt","yassinWa","yassinIg","yassinTt","adminPass"].forEach(function(k){var el=document.getElementById(k); if(el&&db[k]!=null) el.value=db[k];});
 }
 function genCode(){return Math.random().toString(36).slice(2,6).toUpperCase()+"-"+Math.floor(1000+Math.random()*9000)}
@@ -195,9 +211,20 @@ function addSub(){
   if(!name||!phone) return alert("اكتب الاسم والرقم");
   const code=nCode.value.trim()||genCode();
   if(db.subs.some(s=>s.code===code)) return alert("الكود مستخدم");
-  db.subs.push({id:"s"+Date.now(),name,phone,code,plan:nPlan.value,note:nNote.value.trim(),active:true,created:Date.now(),lastSeen:0});
+  db.subs.push({id:"s"+Date.now(),name,phone,code,plan:nPlan.value,note:nNote.value.trim(),gender:nGender.value,weight:nW.value,height:nH.value,age:nA.value,active:true,created:Date.now(),lastSeen:0});
   save(db).then(function(){paint(); nName.value=nPhone.value=nCode.value=nNote.value=""; alert("تم تسجيل الاشتراك على فايربيس. الكود: "+code);}).catch(function(err){paint(); alert("حفظ محلي فقط: "+err.message);});
 }
+
+function editSub(id){
+  const s=load().subs.find(x=>x.id===id); if(!s)return;
+  editBox.style.display="block"; eId.value=s.id; eName.value=s.name||""; ePhone.value=s.phone||""; eCode.value=s.code||""; eGender.value=s.gender||"boy"; eW.value=s.weight||""; eH.value=s.height||""; eA.value=s.age||"";
+}
+function saveEdit(){
+  const db=load(); const s=db.subs.find(x=>x.id===eId.value); if(!s)return;
+  s.name=eName.value.trim(); s.phone=ePhone.value.trim(); s.code=eCode.value.trim(); s.gender=eGender.value; s.weight=eW.value; s.height=eH.value; s.age=eA.value;
+  save(db).then(function(){paint(); alert("اتحفظت البيانات");});
+}
+
 function toggle(id){const db=load(); const s=db.subs.find(x=>x.id===id); if(!s)return; s.active=!(s.active!==false); save(db); paint()}
 function delSub(id){if(!confirm("حذف؟"))return; const db=load(); const s=db.subs.find(x=>x.id===id); if(!s)return; db.subs=db.subs.filter(x=>x.id!==id); s.deletedAt=Date.now(); db.deleted.push(s); save(db); paint();}
 function saveSite(){const db=load(); ["brandName","brandSub","loginTitle","loginDesc","footerNote","credit","imgGym","imgHome","imgUpper","imgLower","imgRest","ahmedWa","ahmedIg","ahmedTt","yassinWa","yassinIg","yassinTt","adminPass"].forEach(function(k){var el=document.getElementById(k); if(el) db[k]=el.value}); save(db).then(function(){alert("اتحفظ على فايربيس")}).catch(function(e){alert(e.message)});}
