@@ -5,30 +5,32 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>أدمن | GymHub</title>
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-database-compat.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#0b1016;--card:#141c26;--elev:#1b2531;--line:#2a3848;--acc:#7eb8c9;--text:#e7eef5;--muted:#93a4b5;--ok:#7dcea0;--bad:#e08b8b}
 *{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;max-width:100%;overflow-x:hidden}
 body{font-family:Cairo,system-ui,sans-serif;background:var(--bg);color:var(--text)}
-button,input,select,textarea{font-family:inherit}
+button,input,select,textarea{font-family:inherit;font-size:16px}
 input,select,textarea{width:100%;background:var(--elev);border:1px solid var(--line);color:var(--text);border-radius:10px;padding:10px 12px}
 label{display:block;color:var(--muted);font-size:.78rem;margin:9px 0 4px}
 .btn{border:0;background:var(--acc);color:#081018;font-weight:700;padding:9px 13px;border-radius:10px;cursor:pointer}
 .btn.ghost{background:var(--elev);color:var(--text);border:1px solid var(--line)}
 .btn.bad{background:#5a2a2a;color:#ffd6d6}
-#login{min-height:100vh;display:grid;place-items:center}
-.box{width:min(390px,92vw);background:var(--card);border:1px solid var(--line);border-radius:20px;padding:28px;text-align:center}
+#login{min-height:100dvh;display:grid;place-items:center;padding:16px}
+.box{width:min(390px,100%);background:var(--card);border:1px solid var(--line);border-radius:20px;padding:24px;text-align:center}
 .err{display:none;color:var(--bad);margin-top:8px}
 #app{display:none}
-.shell{display:grid;grid-template-columns:230px 1fr;min-height:100vh}
+.shell{display:grid;grid-template-columns:230px 1fr;min-height:100dvh}
 .side{background:#0e141c;border-left:1px solid var(--line);padding:18px 10px}
 .side h2{color:var(--acc);margin:4px 10px 14px}
 .nav button{display:block;width:100%;text-align:right;background:none;border:0;color:var(--muted);padding:10px 12px;border-radius:10px;cursor:pointer}
 .nav button.on,.nav button:hover{background:#1b2836;color:#fff}
 .main{padding:18px 18px 50px}
 .page{display:none}.page.on{display:block}
-.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:12px 0}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin:12px 0}
 .stat,.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px}
 .stat small{color:var(--muted)}.stat b{display:block;color:var(--acc);font-size:1.15rem}
 table{width:100%;border-collapse:collapse;font-size:.86rem}
@@ -36,45 +38,47 @@ th,td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:right}
 .row{display:flex;gap:6px;flex-wrap:wrap}
 .hint{color:var(--muted);font-size:.84rem;margin:8px 0 12px}
 .ok{color:var(--ok)}.off{color:var(--bad)}
-.wa{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:#25d366;text-decoration:none}
-@media(max-width:860px){.shell{grid-template-columns:1fr}}
-
-html,body{width:100%;max-width:100%;overflow-x:hidden}
+.form-grid{display:grid;gap:2px}
+.sub-list{display:grid;gap:10px}
+.sub-card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px}
+.sub-card b{display:block;margin-bottom:4px}
+.sub-meta{color:var(--muted);font-size:.8rem;line-height:1.7}
 @media(max-width:860px){
   .shell{grid-template-columns:1fr}
   .side{position:sticky;top:0;z-index:5;border-left:0;border-bottom:1px solid var(--line)}
   .nav{display:flex;flex-wrap:wrap;gap:6px}
   .nav button{width:auto}
   .main{padding:12px}
-  table{font-size:.78rem}
-  th,td{padding:6px 4px}
 }
-.form-grid{display:grid;gap:4px}
-.sub-list{display:grid;gap:10px}
-.sub-card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px}
-.sub-card b{display:block;margin-bottom:4px}
-.sub-meta{color:var(--muted);font-size:.8rem;line-height:1.7}
-
 </style>
 </head>
 <body>
-<div id="login"><div class="box"><h1>GymHub Admin</h1><p class="hint">تحكم كامل في المنصة</p><input type="password" id="pass" placeholder="باسورد الأدمن"><button class="btn" style="width:100%;margin-top:12px" onclick="login()">دخول</button><div class="err" id="err">باسورد غلط</div></div></div>
+<div id="login">
+  <div class="box">
+    <h1>GymHub Admin</h1>
+    <p class="hint">تحكم كامل في المنصة</p>
+    <input type="password" id="pass" placeholder="كود الأدمن" inputmode="numeric" autocomplete="off">
+    <button class="btn" style="width:100%;margin-top:12px" type="button" onclick="login()">دخول</button>
+    <div class="err" id="err">الكود غلط</div>
+  </div>
+</div>
 <div id="app">
 <div class="shell">
 <aside class="side">
 <h2>GymHub</h2>
 <div class="nav">
-<button class="on" onclick="go('dash',this)">الرئيسية</button>
-<button onclick="go('add',this)">إضافة مشترك</button>
-<button onclick="go('list',this)">المشتركين</button>
-<button onclick="go('pays',this)">الاشتراكات</button>
-<button onclick="go('systems',this)">الأنظمة والتمارين</button>
-<button onclick="go('text',this)">العناوين والنصوص</button>
-<button onclick="go('media',this)">الصور</button>
-<button onclick="go('links',this)">وسائل التواصل</button>
-<button onclick="go('security',this)">الحماية</button>
-<button onclick="go('backup',this)">النسخ الاحتياطي</button>
-<button onclick="logout()">خروج</button>
+<button class="on" type="button" onclick="go('dash',this)">الرئيسية</button>
+<button type="button" onclick="go('add',this)">إضافة مشترك</button>
+<button type="button" onclick="go('list',this)">المشتركين</button>
+<button type="button" onclick="go('pays',this)">الاشتراكات</button>
+<button type="button" onclick="go('chat',this)">الدردشة مع المشتركين</button>
+<button type="button" onclick="go('systems',this)">الأنظمة والتمارين</button>
+<button type="button" onclick="go('text',this)">العناوين والنصوص</button>
+<button type="button" onclick="go('media',this)">الصور</button>
+<button type="button" onclick="go('links',this)">وسائل التواصل</button>
+<button type="button" onclick="go('security',this)">الحماية</button>
+<button type="button" onclick="go('backup',this)">النسخ الاحتياطي</button>
+<button type="button" onclick="logout()">خروج</button>
 </div>
 </aside>
 <section class="main">
@@ -98,12 +102,13 @@ html,body{width:100%;max-width:100%;overflow-x:hidden}
 <label>الوزن كجم</label><input id="nW" type="number">
 <label>الطول سم</label><input id="nH" type="number">
 <label>السن</label><input id="nA" type="number">
-<label>الخطة</label><select id="nPlan"><option value="beginner">مبتدئ</option><option value="ppl">PPL</option><option value="glutes">Glute Builder</option></select>
-<label>الباقة</label><select id="nPack"><option value="شهرية 150">شهرية 150</option><option value="3 شهور 500">3 شهور 500</option><option value="6 شهور 850">6 شهور 850</option><option value="سنوية 1500">سنوية 1500</option></select>
+<label>الخطة التدريبية</label><select id="nPlan"><option value="beginner">مبتدئ</option><option value="ppl">PPL</option><option value="glutes">Glute Builder</option></select>
+<label>الباقة</label><select id="nPack"><option value="تجربة 3 أيام">تجربة 3 أيام مجاناً</option>
+<option value="شهرية 150">الباقة الشهرية · 150</option><option value="3 شهور 500">باقة 3 شهور · 500</option><option value="6 شهور 850">باقة 6 شهور · 850</option><option value="سنوية 1500">الباقة السنوية · 1500</option></select>
 <label>المدفوع</label><input id="nPaid" type="number">
 <label>المتبقي</label><input id="nRemain" type="number">
 <label>ملاحظة</label><textarea id="nNote" rows="3"></textarea>
-<button class="btn" style="margin-top:12px" onclick="addSub()">تسجيل الاشتراك</button>
+<button class="btn" style="margin-top:12px" type="button" onclick="addSub()">تسجيل الاشتراك</button>
 </div>
 </div>
 <div class="page" id="list">
@@ -119,10 +124,24 @@ html,body{width:100%;max-width:100%;overflow-x:hidden}
 <label>الوزن</label><input id="eW" type="number">
 <label>الطول</label><input id="eH" type="number">
 <label>السن</label><input id="eA" type="number">
-<label>الباقة</label><select id="ePack"><option value="شهرية 150">الباقة الشهرية · 150</option><option value="3 شهور 500">باقة 3 شهور · 500</option><option value="6 شهور 850">باقة 6 شهور · 850</option><option value="سنوية 1500">الباقة السنوية · 1500</option></select>
+<label>الباقة</label><select id="ePack"><option value="تجربة 3 أيام">تجربة 3 أيام مجاناً</option>
+<option value="شهرية 150">الباقة الشهرية · 150</option><option value="3 شهور 500">باقة 3 شهور · 500</option><option value="6 شهور 850">باقة 6 شهور · 850</option><option value="سنوية 1500">الباقة السنوية · 1500</option></select>
 <label>المدفوع</label><input id="ePaid" type="number">
 <label>المتبقي</label><input id="eRemain" type="number">
-<button class="btn" style="margin-top:10px" onclick="saveEdit()">حفظ التعديل</button>
+<button class="btn" style="margin-top:10px" type="button" onclick="saveEdit()">حفظ التعديل</button>
+</div>
+</div>
+<div class="page" id="chat">
+<h1>الدردشة مع المشتركين</h1>
+<p class="hint">كل عميل له شات لوحده. افتح المحادثة وارد عليه.</p>
+<div class="sub-list" id="chatList"></div>
+<div class="card" id="chatThread" style="display:none;margin-top:12px;padding:0;overflow:hidden">
+<div style="background:#075e54;color:#fff;padding:12px;font-weight:800" id="chatWho">الدردشة مع الكابتن</div>
+<div id="chatMsgs" style="max-height:360px;overflow:auto;padding:12px;background:#0b141a;min-height:220px"></div>
+<div style="display:flex;gap:8px;padding:10px;background:#111b21">
+<input id="adminChat" placeholder="رسالة" style="flex:1;border-radius:22px">
+<button class="btn" type="button" onclick="sendAdminChat()">إرسال</button>
+</div>
 </div>
 </div>
 <div class="page" id="pays">
@@ -131,15 +150,21 @@ html,body{width:100%;max-width:100%;overflow-x:hidden}
 <div class="card" id="payEdit" style="display:none;max-width:520px;margin-top:12px">
 <input type="hidden" id="pId">
 <label>الباقة</label>
-<select id="pPack"><option value="شهرية 150">شهرية 150</option><option value="3 شهور 500">3 شهور 500</option><option value="6 شهور 850">6 شهور 850</option><option value="سنوية 1500">سنوية 1500</option></select>
+<select id="pPack">
+<option value="تجربة 3 أيام">تجربة 3 أيام مجاناً</option>
+<option value="شهرية 150">الباقة الشهرية · 150</option>
+<option value="3 شهور 500">باقة 3 شهور · 500</option>
+<option value="6 شهور 850">باقة 6 شهور · 850</option>
+<option value="سنوية 1500">الباقة السنوية · 1500</option>
+</select>
 <label>المدفوع</label><input id="pPaid" type="number">
 <label>المتبقي</label><input id="pRemain" type="number">
-<button class="btn" style="margin-top:10px" onclick="savePay()">حفظ الاشتراك</button>
+<button class="btn" style="margin-top:10px" type="button" onclick="savePay()">حفظ الاشتراك</button>
 </div>
 </div>
 <div class="page" id="systems">
 <h1>الأنظمة والتمارين</h1>
-<p class="hint">امسح نظام أو تمرين، أو ضيف جديد. الحفظ بيروح فايربيس.</p>
+<p class="hint">ضيف نظام أو تمرين لأي يوم في الأسبوع. الحفظ بيروح فايربيس.</p>
 <div class="card">
 <label>القسم</label>
 <select id="sysSec" onchange="drawSystems()"><option value="boys">Boys</option><option value="girls">Girls</option></select>
@@ -148,15 +173,21 @@ html,body{width:100%;max-width:100%;overflow-x:hidden}
 <b>إضافة نظام جديد</b>
 <label>اسم النظام بالإنجليزي</label><input id="newSysName" placeholder="Glute Builder">
 <label>وصف قصير</label><input id="newSysDesc">
-<button class="btn" style="margin-top:10px" onclick="addSystem()">إضافة نظام</button>
+<label>يوم البداية</label>
+<select id="newSysDay"><option>Saturday</option><option>Sunday</option><option>Monday</option><option>Tuesday</option><option>Wednesday</option><option>Thursday</option><option>Friday</option></select>
+<button class="btn" style="margin-top:10px" type="button" onclick="addSystem()">إضافة نظام</button>
 <hr style="border:0;border-top:1px solid var(--line);margin:16px 0">
 <b>إضافة تمرين لنظام موجود</b>
 <label>النظام</label><select id="exSys"></select>
+<label>اليوم</label>
+<select id="exDay"><option>Saturday</option><option>Sunday</option><option>Monday</option><option>Tuesday</option><option>Wednesday</option><option>Thursday</option><option>Friday</option></select>
+<label>عنوان اليوم</label><input id="exDayTitle" placeholder="Chest / Back">
 <label>اسم التمرين</label><input id="exName">
 <label>العدات</label><input id="exSets" placeholder="3 x 12">
 <label>طريقة الأداء</label><textarea id="exHow" rows="3"></textarea>
-<label>مفتاح الصورة</label><select id="exImg"><option>bench</option><option>squat</option><option>dead</option><option>pull</option><option>press</option><option>row</option><option>walk</option><option>home</option><option>core</option><option>gym</option><option>db</option><option>cable</option></select>
-<button class="btn" style="margin-top:10px" onclick="addExercise()">إضافة تمرين</button>
+<label>مفتاح الصورة</label>
+<select id="exImg"><option>bench</option><option>inc</option><option>squat</option><option>rdl</option><option>pull</option><option>press</option><option>row</option><option>lunge</option><option>hip</option><option>kick</option><option>core</option><option>lat</option><option>curl</option></select>
+<button class="btn" style="margin-top:10px" type="button" onclick="addExercise()">إضافة تمرين</button>
 </div>
 </div>
 <div class="page" id="text">
@@ -168,7 +199,7 @@ html,body{width:100%;max-width:100%;overflow-x:hidden}
 <label>وصف الدخول</label><input id="loginDesc">
 <label>نص الفوتر</label><textarea id="footerNote" rows="3"></textarea>
 <label>حقوق التصميم</label><input id="credit">
-<button class="btn" style="margin-top:12px" onclick="saveSite()">حفظ</button>
+<button class="btn" style="margin-top:12px" type="button" onclick="saveSite()">حفظ</button>
 </div>
 </div>
 <div class="page" id="media">
@@ -180,7 +211,7 @@ html,body{width:100%;max-width:100%;overflow-x:hidden}
 <label>علوي</label><input id="imgUpper">
 <label>سفلي</label><input id="imgLower">
 <label>راحة</label><input id="imgRest">
-<button class="btn" style="margin-top:12px" onclick="saveSite()">حفظ الصور</button>
+<button class="btn" style="margin-top:12px" type="button" onclick="saveSite()">حفظ الصور</button>
 </div>
 </div>
 <div class="page" id="links">
@@ -194,22 +225,21 @@ html,body{width:100%;max-width:100%;overflow-x:hidden}
 <label>واتساب ياسين</label><input id="yassinWa" value="201062944697">
 <label>انستجرام ياسين</label><input id="yassinIg" value="yassein_kahlide">
 <label>تيك توك ياسين</label><input id="yassinTt" value="yaseeinkhalide">
-<button class="btn" style="margin-top:12px" onclick="saveSite()">حفظ الروابط</button>
+<button class="btn" style="margin-top:12px" type="button" onclick="saveSite()">حفظ الروابط</button>
 </div>
 </div>
 <div class="page" id="security">
 <div class="card" style="max-width:460px">
 <h1>الحماية</h1>
-<label>باسورد الأدمن</label><input id="adminPass">
-<button class="btn" style="margin-top:12px" onclick="saveSite()">تغيير الباسورد</button>
+<p class="hint">دخول الأدمن بكود خاص. بيانات المشتركين بتتحفظ على فايربيس.</p>
 </div>
 </div>
 <div class="page" id="backup">
 <div class="card">
 <h1>النسخ الاحتياطي</h1>
 <div class="row">
-<button class="btn" onclick="exportDB()">تحميل نسخة</button>
-<button class="btn ghost" onclick="document.getElementById('imp').click()">استيراد</button>
+<button class="btn" type="button" onclick="exportDB()">تحميل نسخة</button>
+<button class="btn ghost" type="button" onclick="document.getElementById('imp').click()">استيراد</button>
 </div>
 <input id="imp" type="file" accept="application/json" hidden onchange="importDB(event)">
 </div>
@@ -222,100 +252,146 @@ const firebaseConfig={apiKey:"AIzaSyAY8K2_LztVoVX1F00zmvU4ehPj4ufGGAM",authDomai
 try{if(!firebase.apps.length) firebase.initializeApp(firebaseConfig);}catch(e){}
 const FB_URL="https://gymm-c58cb-default-rtdb.europe-west1.firebasedatabase.app/platform.json";
 const KEY="yk_platform_v1";
-const DEF={adminPass:"Yassin@Admin",brandName:"GymHub",brandSub:"اختار القسم ثم نظام التمرين المناسب ليك",loginTitle:"تسجيل الدخول",loginDesc:"ادخل كود الاشتراك أو سجّل حساب جديد.",footerNote:"بنود الخدمة",credit:"تم التصميم بواسطة أحمد و ياسين",ahmedWa:"201159010864",ahmedIg:"ahmed_.elarby",ahmedTt:"ahmed_.elarby",yassinWa:"201062944697",yassinIg:"yassein_kahlide",yassinTt:"yaseeinkhalide",imgGym:"",imgHome:"",imgUpper:"",imgLower:"",imgRest:"",subs:[],deleted:[],programs:null};
-function load(){try{const raw=localStorage.getItem(KEY); if(!raw) return JSON.parse(JSON.stringify(DEF)); const db=Object.assign(JSON.parse(JSON.stringify(DEF)),JSON.parse(raw)); db.subs=Array.isArray(db.subs)?db.subs:[]; db.deleted=Array.isArray(db.deleted)?db.deleted:[]; return db;}catch(e){return JSON.parse(JSON.stringify(DEF))}}
-function saveLocal(db){localStorage.setItem(KEY,JSON.stringify(db)); if(db.programs) localStorage.setItem("yk_programs",JSON.stringify(db.programs));}
-function save(db){saveLocal(db); const data=Object.assign({},db,{updated:Date.now()}); try{firebase.database().ref("platform").set(data);}catch(e){} return fetch(FB_URL,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(data)});}
+const ADMIN_HASH="ebaefa4bd2a01ddc9bb4419a2d9587d68e6b51fe008efe9dce65b3c844629693";
+const DEF={brandName:"GymHub",brandSub:"اختار القسم ثم نظام التمرين المناسب ليك",loginTitle:"تسجيل الدخول",loginDesc:"ادخل كود الاشتراك أو سجّل حساب جديد.",footerNote:"بنود الخدمة",credit:"تم التصميم بواسطة TwoFold-Team",ahmedWa:"201159010864",ahmedIg:"ahmed_.elarby",ahmedTt:"ahmed_.elarby",yassinWa:"201062944697",yassinIg:"yassein_kahlide",yassinTt:"yaseeinkhalide",imgGym:"",imgHome:"",imgUpper:"",imgLower:"",imgRest:"",subs:[],deleted:[],programs:null};
+function $(id){return document.getElementById(id)}
+function load(){
+  try{
+    const raw=localStorage.getItem(KEY);
+    if(!raw) return JSON.parse(JSON.stringify(DEF));
+    const db=Object.assign(JSON.parse(JSON.stringify(DEF)),JSON.parse(raw));
+    db.subs=Array.isArray(db.subs)?db.subs:[];
+    db.deleted=Array.isArray(db.deleted)?db.deleted:[];
+    delete db.adminPass; delete db.adminPassHash;
+    return db;
+  }catch(e){return JSON.parse(JSON.stringify(DEF))}
+}
+function saveLocal(db){const copy=Object.assign({},db); delete copy.adminPass; localStorage.setItem(KEY,JSON.stringify(copy)); if(db.programs) localStorage.setItem("yk_programs",JSON.stringify(db.programs));}
+function save(db){
+  saveLocal(db);
+  const data=Object.assign({},db,{updated:Date.now()});
+  delete data.adminPass; delete data.adminPassHash;
+  return firebase.database().ref("platform").set(data);
+}
 function phoneInt(n){n=String(n||"").replace(/[^\d]/g,""); if(n.startsWith("00"))n=n.slice(2); if(n.startsWith("0"))n="20"+n.slice(1); if(n&&!n.startsWith("20"))n="20"+n; return n}
 function waHref(phone,text){return "https://api.whatsapp.com/send?phone="+phoneInt(phone)+"&text="+encodeURIComponent(text||"")}
 function esc(s){return String(s||"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m]))}
 function live(s){return s.lastSeen && (Date.now()-s.lastSeen)<5*60*1000}
-function login(){if(document.getElementById("pass").value===load().adminPass){sessionStorage.setItem("ykAdmin","1");openApp()}else document.getElementById("err").style.display="block"}
+async function sha256(text){const buf=await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text)); return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,"0")).join("")}
+function login(){
+  const v=($("pass").value||"").trim();
+  if(v==="149252"){ sessionStorage.setItem("ykAdmin","1"); openApp(); }
+  else { $("err").textContent="الكود غلط"; $("err").style.display="block"; }
+}
 function logout(){sessionStorage.removeItem("ykAdmin");location.reload()}
-function openApp(){document.getElementById("login").style.display="none";document.getElementById("app").style.display="block"; firebase.database().ref("platform").once("value").then(function(snap){var d=snap.val(); if(d){if(d.subs&&!Array.isArray(d.subs)) d.subs=Object.values(d.subs); if(d.deleted&&!Array.isArray(d.deleted)) d.deleted=Object.values(d.deleted); saveLocal(Object.assign(load(),d));} paint();}).catch(function(){paint();});}
-function go(id,btn){document.querySelectorAll(".page").forEach(p=>p.classList.remove("on"));document.querySelectorAll(".nav button").forEach(b=>b.classList.remove("on"));document.getElementById(id).classList.add("on");if(btn)btn.classList.add("on"); if(id==="systems") drawSystems(); if(id==="pays") paintPay();}
-
+function openApp(){$("login").style.display="none";$("app").style.display="block"; firebase.database().ref("platform").once("value").then(function(snap){var d=snap.val(); if(d){if(d.subs&&!Array.isArray(d.subs)) d.subs=Object.values(d.subs); if(d.deleted&&!Array.isArray(d.deleted)) d.deleted=Object.values(d.deleted); saveLocal(Object.assign(load(),d));} paint();}).catch(function(){paint();});}
+function go(id,btn){document.querySelectorAll(".page").forEach(pg=>pg.classList.remove("on"));document.querySelectorAll(".nav button").forEach(b=>b.classList.remove("on"));$(id).classList.add("on");if(btn)btn.classList.add("on"); if(id==="systems") drawSystems(); if(id==="pays") paintPay(); if(id==="chat") loadChats();}
+function packMonthsOf(val){val=String(val||""); if(val.includes("تجربة")||val.includes("أيام")) return 0; if(val.includes("سنو")||val.includes("1500")||val.includes("12")) return 12; if(val.includes("6")||val.includes("850")) return 6; if(val.includes("3 شهور")||val.includes("500")) return 3; return 1;}
+function applyPack(s,pack,paid,remain){s.package=pack; s.months=packMonthsOf(pack); s.days=(String(pack).includes("تجربة")||String(pack).includes("أيام"))?3:0; s.paid=paid; s.remain=remain; const start=s.created||Date.now(); s.expiresAt=s.days? start+s.days*24*60*60*1000 : start+Math.max(s.months,1)*30*24*60*60*1000; if(Date.now()>s.expiresAt) s.active=false; else if(s.active!==false) s.active=true; return s;}
 function paintPay(){
   const db=load();
-  payRows.innerHTML=(db.subs||[]).map(s=>`<div class="sub-card"><b>${esc(s.name)}</b><div class="sub-meta">${esc(s.phone)} · ${esc(s.code)}<br>الباقة: ${esc(s.package||"-")}<br>الباقة: ${esc(s.package||"-")} · ${esc(s.months||1)} شهر<br>ينتهي: ${s.expiresAt?new Date(+s.expiresAt).toLocaleDateString("ar-EG"):"-"}<br>مدفوع: ${esc(s.paid||0)} · متبقي: ${esc(s.remain||0)}</div><button class="btn ghost" onclick="editPay('${s.id}')">تعديل الدفع</button></div>`).join("")||"<div class='hint'>لا يوجد</div>";
+  $("payRows").innerHTML=(db.subs||[]).map(s=>`<div class="sub-card"><b>${esc(s.name)}</b><div class="sub-meta">${esc(s.phone)} · ${esc(s.code)}<br>الباقة: ${esc(s.package||"-")} · ${esc(s.months||1)} شهر<br>ينتهي: ${s.expiresAt?new Date(+s.expiresAt).toLocaleDateString("ar-EG"):"-"}<br>مدفوع: ${esc(s.paid||0)} · متبقي: ${esc(s.remain||0)}</div><button class="btn ghost" type="button" onclick="editPay('${s.id}')">تعديل الدفع</button></div>`).join("")||"<div class='hint'>لا يوجد</div>";
 }
-function editPay(id){const s=load().subs.find(x=>x.id===id);if(!s)return;payEdit.style.display="block";pId.value=s.id;pPack.value=s.package||"شهرية 150";pPaid.value=s.paid||0;pRemain.value=s.remain||0;}
-function savePay(){const db=load();const s=db.subs.find(x=>x.id===pId.value);if(!s)return;applyPack(s,pPack.value,pPaid.value,pRemain.value);save(db).then(function(){paint();paintPay();alert("اتحفظ");});}
-
+function editPay(id){const s=load().subs.find(x=>x.id===id); if(!s)return; $("payEdit").style.display="block"; $("pId").value=s.id; $("pPack").value=s.package||"شهرية 150"; $("pPaid").value=s.paid||0; $("pRemain").value=s.remain||0;}
+function savePay(){const db=load(); const s=db.subs.find(x=>x.id===$("pId").value); if(!s)return; applyPack(s,$("pPack").value,$("pPaid").value,$("pRemain").value); save(db).then(function(){paint();paintPay();alert("اتحفظ");});}
 function paint(){
   const db=load();
-  cAll.textContent=db.subs.length; cLive.textContent=db.subs.filter(live).length; cOn.textContent=db.subs.filter(s=>s.active!==false).length; cDel.textContent=(db.deleted||[]).length;
-  dashRows.innerHTML=db.subs.map(s=>"<tr><td>"+esc(s.name)+"</td><td>"+esc(s.phone)+"</td><td>"+esc(s.code)+"</td><td class='"+(s.active===false?"off":"ok")+"'>"+(s.active===false?"ملغي":"شغال")+"</td></tr>").join("")||"<tr><td colspan='4'>لا يوجد</td></tr>";
-  listRows.innerHTML=db.subs.map(s=>`<div class="sub-card"><b>${esc(s.name)}</b><div class="sub-meta">${esc(s.phone)} · كود ${esc(s.code)}<br>${esc((s.gender||"-")+" · "+(s.weight||"-")+" كجم · "+(s.height||"-")+" سم · "+(s.age||"-"))}<br>${s.active===false?"ملغي":"شغال"}</div><div class="row" style="margin-top:8px"><a class="btn" target="_blank" href="${waHref(s.phone,"أهلاً "+(s.name||"")+" تم الاشتراك في GymHub. كودك: "+s.code)}">واتساب</a><button class="btn ghost" onclick="editSub('${s.id}')">تعديل</button><button class="btn ghost" onclick="toggle('${s.id}')">${s.active===false?"تشغيل":"إلغاء"}</button><button class="btn bad" onclick="delSub('${s.id}')">حذف</button></div></div>`).join("")||"<div class='hint'>لا يوجد مشتركين</div>";
-  ["brandName","brandSub","loginTitle","loginDesc","footerNote","credit","imgGym","imgHome","imgUpper","imgLower","imgRest","ahmedWa","ahmedIg","ahmedTt","yassinWa","yassinIg","yassinTt","adminPass"].forEach(function(k){var el=document.getElementById(k); if(el&&db[k]!=null) el.value=db[k];});
+  $("cAll").textContent=db.subs.length;
+  $("cLive").textContent=db.subs.filter(live).length;
+  $("cOn").textContent=db.subs.filter(s=>s.active!==false && !(s.expiresAt && Date.now()>s.expiresAt)).length;
+  $("cDel").textContent=(db.deleted||[]).length;
+  $("dashRows").innerHTML=db.subs.map(s=>{const off=s.active===false||(s.expiresAt&&Date.now()>s.expiresAt); return "<tr><td>"+esc(s.name)+"</td><td>"+esc(s.phone)+"</td><td>"+esc(s.code)+"</td><td class='"+(off?"off":"ok")+"'>"+(off?"منتهي/ملغي":"شغال")+"</td></tr>";}).join("")||"<tr><td colspan='4'>لا يوجد</td></tr>";
+  $("listRows").innerHTML=db.subs.map(s=>`<div class="sub-card"><b>${esc(s.name)}</b><div class="sub-meta">${esc(s.phone)} · كود ${esc(s.code)}<br>${esc((s.gender||"-")+" · "+(s.weight||"-")+" كجم · "+(s.height||"-")+" سم · "+(s.age||"-"))}<br>${esc(s.package||"-")} · ${esc(s.months||1)} شهر<br>ينتهي ${s.expiresAt?new Date(+s.expiresAt).toLocaleDateString("ar-EG"):"-"}<br>${s.active===false?"ملغي":"شغال"}</div><div class="row" style="margin-top:8px"><a class="btn" target="_blank" href="${waHref(s.phone,"أهلاً "+(s.name||"")+" تم الاشتراك في GymHub. كودك: "+s.code)}">واتساب</a><button class="btn ghost" type="button" onclick="editSub('${s.id}')">تعديل</button><button class="btn ghost" type="button" onclick="toggle('${s.id}')">${s.active===false?"تشغيل":"إلغاء"}</button><button class="btn bad" type="button" onclick="delSub('${s.id}')">حذف</button></div></div>`).join("")||"<div class='hint'>لا يوجد مشتركين</div>";
+  ["brandName","brandSub","loginTitle","loginDesc","footerNote","credit","imgGym","imgHome","imgUpper","imgLower","imgRest","ahmedWa","ahmedIg","ahmedTt","yassinWa","yassinIg","yassinTt"].forEach(function(k){var el=$(k); if(el&&db[k]!=null) el.value=db[k];});
 }
-function genCode(){return Math.random().toString(36).slice(2,6).toUpperCase()+"-"+Math.floor(1000+Math.random()*9000)}
-
-function packMonthsOf(val){val=String(val||""); if(val.includes("سنو")||val.includes("1500")||val.includes("12")) return 12; if(val.includes("6")||val.includes("850")) return 6; if(val.includes("3")||val.includes("500")) return 3; return 1;}
-function applyPack(s,pack,paid,remain){s.package=pack; s.months=packMonthsOf(pack); s.paid=paid; s.remain=remain; s.expiresAt=(s.created||Date.now())+s.months*30*24*60*60*1000; if(Date.now()>s.expiresAt) s.active=false; else if(s.active!==false) s.active=true; return s;}
-
+function genCode(){const chars="ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; let a=""; for(let i=0;i<4;i++) a+=chars[Math.floor(Math.random()*chars.length)]; let b=""; for(let i=0;i<4;i++) b+=String(Math.floor(Math.random()*10)); return a+"-"+b;}
 function addSub(){
-  const db=load(); const name=nName.value.trim(); const phone=nPhone.value.trim();
+  const db=load();
+  const name=$("nName").value.trim();
+  const phone=$("nPhone").value.trim();
   if(!name||!phone) return alert("اكتب الاسم والرقم");
-  const code=nCode.value.trim()||genCode();
+  const code=$("nCode").value.trim()||genCode();
   if(db.subs.some(s=>s.code===code)) return alert("الكود مستخدم");
-  const created=Date.now(); const months=packMonthsOf(nPack.value); db.subs.push(applyPack({id:"s"+created,name,phone,code,plan:nPlan.value,note:nNote.value.trim(),gender:nGender.value,weight:nW.value,height:nH.value,age:nA.value,active:true,created,lastSeen:0}, nPack.value, nPaid.value||0, nRemain.value||0));
-  save(db).then(function(){paint(); nName.value=nPhone.value=nCode.value=nNote.value=""; alert("تم تسجيل الاشتراك على فايربيس. الكود: "+code);}).catch(function(err){paint(); alert("حفظ محلي فقط: "+err.message);});
+  const created=Date.now();
+  db.subs.push(applyPack({id:"s"+created,name,phone,code,plan:$("nPlan").value,note:$("nNote").value.trim(),gender:$("nGender").value,weight:$("nW").value,height:$("nH").value,age:$("nA").value,active:true,created,lastSeen:0}, $("nPack").value, $("nPaid").value||0, $("nRemain").value||0));
+  save(db).then(function(){paint(); $("nName").value=""; $("nPhone").value=""; $("nCode").value=""; $("nNote").value=""; alert("تم تسجيل الاشتراك. الكود: "+code);}).catch(function(err){paint(); alert("حفظ محلي فقط: "+err.message);});
 }
-
 function editSub(id){
   const s=load().subs.find(x=>x.id===id); if(!s)return;
-  editBox.style.display="block"; eId.value=s.id; eName.value=s.name||""; ePhone.value=s.phone||""; eCode.value=s.code||""; eGender.value=s.gender||"boy"; eW.value=s.weight||""; eH.value=s.height||""; eA.value=s.age||""; if(document.getElementById("ePack")){ePack.value=s.package||"شهرية 150"; ePaid.value=s.paid||0; eRemain.value=s.remain||0;}
+  $("editBox").style.display="block";
+  $("eId").value=s.id; $("eName").value=s.name||""; $("ePhone").value=s.phone||""; $("eCode").value=s.code||""; $("eGender").value=s.gender||"boy"; $("eW").value=s.weight||""; $("eH").value=s.height||""; $("eA").value=s.age||"";
+  if($("ePack")){$("ePack").value=s.package||"شهرية 150"; $("ePaid").value=s.paid||0; $("eRemain").value=s.remain||0;}
 }
 function saveEdit(){
-  const db=load(); const s=db.subs.find(x=>x.id===eId.value); if(!s)return;
-  s.name=eName.value.trim(); s.phone=ePhone.value.trim(); s.code=eCode.value.trim(); s.gender=eGender.value; s.weight=eW.value; s.height=eH.value; s.age=eA.value; if(document.getElementById("ePack")) applyPack(s,ePack.value,ePaid.value,eRemain.value);
+  const db=load(); const s=db.subs.find(x=>x.id===$("eId").value); if(!s)return;
+  s.name=$("eName").value.trim(); s.phone=$("ePhone").value.trim(); s.code=$("eCode").value.trim(); s.gender=$("eGender").value; s.weight=$("eW").value; s.height=$("eH").value; s.age=$("eA").value;
+  if($("ePack")) applyPack(s,$("ePack").value,$("ePaid").value,$("eRemain").value);
   save(db).then(function(){paint(); alert("اتحفظت البيانات");});
 }
-
 function toggle(id){const db=load(); const s=db.subs.find(x=>x.id===id); if(!s)return; s.active=!(s.active!==false); save(db); paint()}
 function delSub(id){if(!confirm("حذف؟"))return; const db=load(); const s=db.subs.find(x=>x.id===id); if(!s)return; db.subs=db.subs.filter(x=>x.id!==id); s.deletedAt=Date.now(); db.deleted.push(s); save(db); paint();}
-function saveSite(){const db=load(); ["brandName","brandSub","loginTitle","loginDesc","footerNote","credit","imgGym","imgHome","imgUpper","imgLower","imgRest","ahmedWa","ahmedIg","ahmedTt","yassinWa","yassinIg","yassinTt","adminPass"].forEach(function(k){var el=document.getElementById(k); if(el) db[k]=el.value}); save(db).then(function(){alert("اتحفظ على فايربيس")}).catch(function(e){alert(e.message)});}
-function ensurePrograms(db){
-  if(db.programs && db.programs.boys && db.programs.days) return db.programs;
-  db.programs={boys:[],girls:[],days:{}};
-  return db.programs;
+async function saveSite(){
+  const db=load();
+  ["brandName","brandSub","loginTitle","loginDesc","footerNote","credit","imgGym","imgHome","imgUpper","imgLower","imgRest","ahmedWa","ahmedIg","ahmedTt","yassinWa","yassinIg","yassinTt"].forEach(function(k){var el=$(k); if(el) db[k]=el.value});
+  delete db.adminPass; delete db.adminPassHash;
+  save(db).then(function(){alert("اتحفظ على فايربيس")}).catch(function(e){alert(e.message)});
 }
+function ensurePrograms(db){if(db.programs && db.programs.boys && db.programs.days) return db.programs; db.programs={boys:[],girls:[],days:{}}; return db.programs;}
 function drawSystems(){
-  const db=load(); const p=ensurePrograms(db); const sec=sysSec.value;
-  const list=p[sec]||[];
-  sysList.innerHTML=list.map(function(s,i){
-    const days=(p.days[s.id]||[]);
-    const items=days.map(function(d,di){return (d.items||[]).map(function(it,ii){return "<div class='row' style='margin:4px 0'><span>"+esc(it.name)+"</span><button class='btn bad' onclick=\"delEx('"+s.id+"',"+di+","+ii+")\">مسح التمرين</button></div>"}).join("")}).join("");
-    return "<div class='card' style='margin:8px 0'><b>"+esc(s.name)+"</b> <button class='btn bad' onclick=\"delSystem('"+sec+"','"+s.id+"')\">مسح النظام</button>"+items+"</div>";
-  }).join("")||"<div class='hint'>مفيش أنظمة مضافة من الأدمن هنا. الأنظمة الافتراضية ظاهرة للمشترك لحد ما تضيف/تعدّل.</div>";
-  exSys.innerHTML=list.map(s=>"<option value='"+s.id+"'>"+s.name+"</option>").join("");
+  const db=load(); const prog=ensurePrograms(db); const sec=$("sysSec").value; const list=prog[sec]||[];
+  $("sysList").innerHTML=list.map(function(s){
+    const days=(prog.days[s.id]||[]);
+    const items=days.map(function(d,di){return "<div class='hint'>"+esc(d.day)+" · "+esc(d.title||"")+"</div>"+(d.items||[]).map(function(it,ii){return "<div class='row' style='margin:4px 0'><span>"+esc(it.name)+"</span><button class='btn bad' type='button' onclick=\"delEx('"+s.id+"',"+di+","+ii+")\">مسح التمرين</button></div>"}).join("")}).join("");
+    return "<div class='card' style='margin:8px 0'><b>"+esc(s.name)+"</b> <button class='btn bad' type='button' onclick=\"delSystem('"+sec+"','"+s.id+"')\">مسح النظام</button>"+items+"</div>";
+  }).join("")||"<div class='hint'>مفيش أنظمة مضافة من الأدمن هنا.</div>";
+  $("exSys").innerHTML=list.map(s=>"<option value='"+s.id+"'>"+s.name+"</option>").join("");
 }
 function addSystem(){
-  const db=load(); const p=ensurePrograms(db); const sec=sysSec.value;
-  const name=newSysName.value.trim(); if(!name) return alert("اكتب اسم النظام");
+  const db=load(); const prog=ensurePrograms(db); const sec=$("sysSec").value;
+  const name=$("newSysName").value.trim(); if(!name) return alert("اكتب اسم النظام");
   const id=name.toLowerCase().replace(/[^a-z0-9]+/g,"_")+Date.now().toString().slice(-4);
-  p[sec]=p[sec]||[]; p[sec].push({id,name,img:sec==="girls"?"home":"gym",desc:newSysDesc.value.trim()});
-  p.days[id]=[{day:"Saturday",title:name,items:[]}];
-  db.programs=p; save(db).then(function(){drawSystems(); alert("اتضاف النظام")});
+  const day=$("newSysDay")?$("newSysDay").value:"Saturday";
+  prog[sec]=prog[sec]||[]; prog[sec].push({id,name,img:sec==="girls"?"hip":"bench",desc:$("newSysDesc").value.trim()});
+  prog.days[id]=[{day:day,title:name,items:[]}];
+  db.programs=prog; save(db).then(function(){drawSystems(); alert("اتضاف النظام")});
 }
-function delSystem(sec,id){
-  if(!confirm("مسح النظام؟"))return;
-  const db=load(); const p=ensurePrograms(db);
-  p[sec]=(p[sec]||[]).filter(s=>s.id!==id); delete p.days[id];
-  db.programs=p; save(db).then(drawSystems);
-}
+function delSystem(sec,id){if(!confirm("مسح النظام؟"))return; const db=load(); const prog=ensurePrograms(db); prog[sec]=(prog[sec]||[]).filter(s=>s.id!==id); delete prog.days[id]; db.programs=prog; save(db).then(drawSystems);}
 function addExercise(){
-  const db=load(); const p=ensurePrograms(db); const id=exSys.value; if(!id) return alert("اختار نظام");
-  p.days[id]=p.days[id]||[{day:"Saturday",title:"Day",items:[]}];
-  p.days[id][0].items=p.days[id][0].items||[];
-  p.days[id][0].items.push({name:exName.value.trim(),sets:exSets.value.trim(),how:exHow.value.trim(),img:exImg.value});
-  db.programs=p; save(db).then(function(){drawSystems(); alert("اتضاف التمرين")});
+  const db=load(); const prog=ensurePrograms(db); const id=$("exSys").value; if(!id) return alert("اختار نظام");
+  const dayName=$("exDay")?$("exDay").value:"Saturday";
+  const title=$("exDayTitle")?$("exDayTitle").value.trim():dayName;
+  prog.days[id]=prog.days[id]||[];
+  let day=prog.days[id].find(d=>d.day===dayName);
+  if(!day){ day={day:dayName,title:title||dayName,items:[]}; prog.days[id].push(day); }
+  else if(title) day.title=title;
+  day.items=day.items||[];
+  day.items.push({name:$("exName").value.trim(),sets:$("exSets").value.trim(),how:$("exHow").value.trim(),img:$("exImg").value,forms:[$("exSets").value.trim()||"3 x 12"]});
+  db.programs=prog; save(db).then(function(){drawSystems(); alert("اتضاف التمرين");});
 }
-function delEx(id,di,ii){
-  const db=load(); const p=ensurePrograms(db);
-  if(p.days[id] && p.days[id][di]) p.days[id][di].items.splice(ii,1);
-  db.programs=p; save(db).then(drawSystems);
+function delEx(id,di,ii){const db=load(); const prog=ensurePrograms(db); if(prog.days[id] && prog.days[id][di]) prog.days[id][di].items.splice(ii,1); db.programs=prog; save(db).then(drawSystems);}
+let currentChat=null;
+function loadChats(){
+  firebase.database().ref("platform/chats").once("value").then(function(snap){
+    const val=snap.val()||{};
+    const ids=Object.keys(val);
+    $("chatList").innerHTML=ids.map(id=>{const c=val[id]||{}; return `<div class="sub-card"><b>${esc(c.name||id)}</b><div class="sub-meta">${esc(c.phone||"")} · ${esc(c.code||"")}</div><button class="btn ghost" type="button" onclick="openChat('${id}')">فتح الشات</button></div>`;}).join("")||"<div class='hint'>لا توجد محادثات بعد</div>";
+  });
+}
+function openChat(id){
+  currentChat=id; $("chatThread").style.display="block";
+  firebase.database().ref("platform/chats/"+id).once("value").then(function(s){const c=s.val()||{}; $("chatWho").textContent=(c.name||id)+" · "+(c.code||"");});
+  firebase.database().ref("platform/chats/"+id+"/messages").limitToLast(80).on("value",function(snap){
+    const val=snap.val()||{};
+    const arr=Object.keys(val).map(k=>val[k]).sort((a,b)=>(a.at||0)-(b.at||0));
+    $("chatMsgs").innerHTML=arr.map(m=>{const mine=m.from==="admin"; const tm=m.at?new Date(m.at).toLocaleTimeString("ar-EG",{hour:"2-digit",minute:"2-digit"}):""; return `<div style="max-width:80%;padding:8px 12px;border-radius:14px;margin:6px 0;${mine?"margin-right:auto;background:#005c4b;color:#fff":"margin-left:auto;background:#202c33;color:#e9edef"}">${esc(m.text||"")}<small style="display:block;opacity:.7;font-size:.7rem;margin-top:4px">${mine?"أنت":"العميل"} · ${tm}</small></div>`;}).join("");
+  });
+}
+function sendAdminChat(){
+  if(!currentChat) return;
+  const t=($("adminChat").value||"").trim(); if(!t) return;
+  firebase.database().ref("platform/chats/"+currentChat+"/messages").push({from:"admin",text:t,at:Date.now()});
+  firebase.database().ref("platform/chats/"+currentChat).update({updated:Date.now()});
+  $("adminChat").value="";
 }
 function exportDB(){const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([JSON.stringify(load(),null,2)],{type:"application/json"})); a.download="gymhub-backup.json"; a.click()}
 function importDB(e){const f=e.target.files[0]; if(!f)return; const r=new FileReader(); r.onload=function(){try{save(JSON.parse(r.result)).then(function(){paint();alert("تم")})}catch(err){alert("ملف غلط")}}; r.readAsText(f)}
