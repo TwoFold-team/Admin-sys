@@ -67,6 +67,7 @@ html,body{width:100%;max-width:100%;overflow-x:hidden}
 <button class="on" onclick="go('dash',this)">الرئيسية</button>
 <button onclick="go('add',this)">إضافة مشترك</button>
 <button onclick="go('list',this)">المشتركين</button>
+<button onclick="go('pays',this)">الاشتراكات</button>
 <button onclick="go('systems',this)">الأنظمة والتمارين</button>
 <button onclick="go('text',this)">العناوين والنصوص</button>
 <button onclick="go('media',this)">الصور</button>
@@ -98,6 +99,9 @@ html,body{width:100%;max-width:100%;overflow-x:hidden}
 <label>الطول سم</label><input id="nH" type="number">
 <label>السن</label><input id="nA" type="number">
 <label>الخطة</label><select id="nPlan"><option value="beginner">مبتدئ</option><option value="ppl">PPL</option><option value="glutes">Glute Builder</option></select>
+<label>الباقة</label><select id="nPack"><option value="شهرية 150">شهرية 150</option><option value="3 شهور 500">3 شهور 500</option><option value="6 شهور 850">6 شهور 850</option><option value="سنوية 1500">سنوية 1500</option></select>
+<label>المدفوع</label><input id="nPaid" type="number">
+<label>المتبقي</label><input id="nRemain" type="number">
 <label>ملاحظة</label><textarea id="nNote" rows="3"></textarea>
 <button class="btn" style="margin-top:12px" onclick="addSub()">تسجيل الاشتراك</button>
 </div>
@@ -115,7 +119,22 @@ html,body{width:100%;max-width:100%;overflow-x:hidden}
 <label>الوزن</label><input id="eW" type="number">
 <label>الطول</label><input id="eH" type="number">
 <label>السن</label><input id="eA" type="number">
+<label>الباقة</label><select id="ePack"><option value="شهرية 150">الباقة الشهرية · 150</option><option value="3 شهور 500">باقة 3 شهور · 500</option><option value="6 شهور 850">باقة 6 شهور · 850</option><option value="سنوية 1500">الباقة السنوية · 1500</option></select>
+<label>المدفوع</label><input id="ePaid" type="number">
+<label>المتبقي</label><input id="eRemain" type="number">
 <button class="btn" style="margin-top:10px" onclick="saveEdit()">حفظ التعديل</button>
+</div>
+</div>
+<div class="page" id="pays">
+<h1>الاشتراكات والمدفوعات</h1>
+<div class="sub-list" id="payRows"></div>
+<div class="card" id="payEdit" style="display:none;max-width:520px;margin-top:12px">
+<input type="hidden" id="pId">
+<label>الباقة</label>
+<select id="pPack"><option value="شهرية 150">شهرية 150</option><option value="3 شهور 500">3 شهور 500</option><option value="6 شهور 850">6 شهور 850</option><option value="سنوية 1500">سنوية 1500</option></select>
+<label>المدفوع</label><input id="pPaid" type="number">
+<label>المتبقي</label><input id="pRemain" type="number">
+<button class="btn" style="margin-top:10px" onclick="savePay()">حفظ الاشتراك</button>
 </div>
 </div>
 <div class="page" id="systems">
@@ -214,7 +233,15 @@ function live(s){return s.lastSeen && (Date.now()-s.lastSeen)<5*60*1000}
 function login(){if(document.getElementById("pass").value===load().adminPass){sessionStorage.setItem("ykAdmin","1");openApp()}else document.getElementById("err").style.display="block"}
 function logout(){sessionStorage.removeItem("ykAdmin");location.reload()}
 function openApp(){document.getElementById("login").style.display="none";document.getElementById("app").style.display="block"; firebase.database().ref("platform").once("value").then(function(snap){var d=snap.val(); if(d){if(d.subs&&!Array.isArray(d.subs)) d.subs=Object.values(d.subs); if(d.deleted&&!Array.isArray(d.deleted)) d.deleted=Object.values(d.deleted); saveLocal(Object.assign(load(),d));} paint();}).catch(function(){paint();});}
-function go(id,btn){document.querySelectorAll(".page").forEach(p=>p.classList.remove("on"));document.querySelectorAll(".nav button").forEach(b=>b.classList.remove("on"));document.getElementById(id).classList.add("on");if(btn)btn.classList.add("on"); if(id==="systems") drawSystems();}
+function go(id,btn){document.querySelectorAll(".page").forEach(p=>p.classList.remove("on"));document.querySelectorAll(".nav button").forEach(b=>b.classList.remove("on"));document.getElementById(id).classList.add("on");if(btn)btn.classList.add("on"); if(id==="systems") drawSystems(); if(id==="pays") paintPay();}
+
+function paintPay(){
+  const db=load();
+  payRows.innerHTML=(db.subs||[]).map(s=>`<div class="sub-card"><b>${esc(s.name)}</b><div class="sub-meta">${esc(s.phone)} · ${esc(s.code)}<br>الباقة: ${esc(s.package||"-")}<br>الباقة: ${esc(s.package||"-")} · ${esc(s.months||1)} شهر<br>ينتهي: ${s.expiresAt?new Date(+s.expiresAt).toLocaleDateString("ar-EG"):"-"}<br>مدفوع: ${esc(s.paid||0)} · متبقي: ${esc(s.remain||0)}</div><button class="btn ghost" onclick="editPay('${s.id}')">تعديل الدفع</button></div>`).join("")||"<div class='hint'>لا يوجد</div>";
+}
+function editPay(id){const s=load().subs.find(x=>x.id===id);if(!s)return;payEdit.style.display="block";pId.value=s.id;pPack.value=s.package||"شهرية 150";pPaid.value=s.paid||0;pRemain.value=s.remain||0;}
+function savePay(){const db=load();const s=db.subs.find(x=>x.id===pId.value);if(!s)return;applyPack(s,pPack.value,pPaid.value,pRemain.value);save(db).then(function(){paint();paintPay();alert("اتحفظ");});}
+
 function paint(){
   const db=load();
   cAll.textContent=db.subs.length; cLive.textContent=db.subs.filter(live).length; cOn.textContent=db.subs.filter(s=>s.active!==false).length; cDel.textContent=(db.deleted||[]).length;
@@ -223,22 +250,26 @@ function paint(){
   ["brandName","brandSub","loginTitle","loginDesc","footerNote","credit","imgGym","imgHome","imgUpper","imgLower","imgRest","ahmedWa","ahmedIg","ahmedTt","yassinWa","yassinIg","yassinTt","adminPass"].forEach(function(k){var el=document.getElementById(k); if(el&&db[k]!=null) el.value=db[k];});
 }
 function genCode(){return Math.random().toString(36).slice(2,6).toUpperCase()+"-"+Math.floor(1000+Math.random()*9000)}
+
+function packMonthsOf(val){val=String(val||""); if(val.includes("سنو")||val.includes("1500")||val.includes("12")) return 12; if(val.includes("6")||val.includes("850")) return 6; if(val.includes("3")||val.includes("500")) return 3; return 1;}
+function applyPack(s,pack,paid,remain){s.package=pack; s.months=packMonthsOf(pack); s.paid=paid; s.remain=remain; s.expiresAt=(s.created||Date.now())+s.months*30*24*60*60*1000; if(Date.now()>s.expiresAt) s.active=false; else if(s.active!==false) s.active=true; return s;}
+
 function addSub(){
   const db=load(); const name=nName.value.trim(); const phone=nPhone.value.trim();
   if(!name||!phone) return alert("اكتب الاسم والرقم");
   const code=nCode.value.trim()||genCode();
   if(db.subs.some(s=>s.code===code)) return alert("الكود مستخدم");
-  db.subs.push({id:"s"+Date.now(),name,phone,code,plan:nPlan.value,note:nNote.value.trim(),gender:nGender.value,weight:nW.value,height:nH.value,age:nA.value,active:true,created:Date.now(),lastSeen:0});
+  const created=Date.now(); const months=packMonthsOf(nPack.value); db.subs.push(applyPack({id:"s"+created,name,phone,code,plan:nPlan.value,note:nNote.value.trim(),gender:nGender.value,weight:nW.value,height:nH.value,age:nA.value,active:true,created,lastSeen:0}, nPack.value, nPaid.value||0, nRemain.value||0));
   save(db).then(function(){paint(); nName.value=nPhone.value=nCode.value=nNote.value=""; alert("تم تسجيل الاشتراك على فايربيس. الكود: "+code);}).catch(function(err){paint(); alert("حفظ محلي فقط: "+err.message);});
 }
 
 function editSub(id){
   const s=load().subs.find(x=>x.id===id); if(!s)return;
-  editBox.style.display="block"; eId.value=s.id; eName.value=s.name||""; ePhone.value=s.phone||""; eCode.value=s.code||""; eGender.value=s.gender||"boy"; eW.value=s.weight||""; eH.value=s.height||""; eA.value=s.age||"";
+  editBox.style.display="block"; eId.value=s.id; eName.value=s.name||""; ePhone.value=s.phone||""; eCode.value=s.code||""; eGender.value=s.gender||"boy"; eW.value=s.weight||""; eH.value=s.height||""; eA.value=s.age||""; if(document.getElementById("ePack")){ePack.value=s.package||"شهرية 150"; ePaid.value=s.paid||0; eRemain.value=s.remain||0;}
 }
 function saveEdit(){
   const db=load(); const s=db.subs.find(x=>x.id===eId.value); if(!s)return;
-  s.name=eName.value.trim(); s.phone=ePhone.value.trim(); s.code=eCode.value.trim(); s.gender=eGender.value; s.weight=eW.value; s.height=eH.value; s.age=eA.value;
+  s.name=eName.value.trim(); s.phone=ePhone.value.trim(); s.code=eCode.value.trim(); s.gender=eGender.value; s.weight=eW.value; s.height=eH.value; s.age=eA.value; if(document.getElementById("ePack")) applyPack(s,ePack.value,ePaid.value,eRemain.value);
   save(db).then(function(){paint(); alert("اتحفظت البيانات");});
 }
 
