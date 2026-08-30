@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>أدمن | GymHub</title>
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-database-compat.js"></script>
@@ -38,6 +38,23 @@ th,td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:right}
 .ok{color:var(--ok)}.off{color:var(--bad)}
 .wa{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:#25d366;text-decoration:none}
 @media(max-width:860px){.shell{grid-template-columns:1fr}}
+
+html,body{width:100%;max-width:100%;overflow-x:hidden}
+@media(max-width:860px){
+  .shell{grid-template-columns:1fr}
+  .side{position:sticky;top:0;z-index:5;border-left:0;border-bottom:1px solid var(--line)}
+  .nav{display:flex;flex-wrap:wrap;gap:6px}
+  .nav button{width:auto}
+  .main{padding:12px}
+  table{font-size:.78rem}
+  th,td{padding:6px 4px}
+}
+.form-grid{display:grid;gap:4px}
+.sub-list{display:grid;gap:10px}
+.sub-card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px}
+.sub-card b{display:block;margin-bottom:4px}
+.sub-meta{color:var(--muted);font-size:.8rem;line-height:1.7}
+
 </style>
 </head>
 <body>
@@ -72,7 +89,7 @@ th,td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:right}
 </div>
 <div class="page" id="add">
 <h1>إضافة مشترك</h1>
-<div class="card" style="max-width:520px">
+<div class="card form-grid" style="max-width:560px">
 <label>الاسم</label><input id="nName">
 <label>الموبايل</label><input id="nPhone">
 <label>الكود</label><input id="nCode" placeholder="سيبه فاضي يتولد">
@@ -87,7 +104,7 @@ th,td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:right}
 </div>
 <div class="page" id="list">
 <h1>المشتركين</h1>
-<div class="card" style="overflow:auto"><table><thead><tr><th>الاسم</th><th>الهاتف</th><th>الكود</th><th>بيانات</th><th>واتساب</th><th>تحكم</th></tr></thead><tbody id="listRows"></tbody></table></div>
+<div class="sub-list" id="listRows"></div>
 <div class="card" id="editBox" style="display:none;max-width:520px;margin-top:12px">
 <h3>تعديل بيانات المشترك</h3>
 <input type="hidden" id="eId">
@@ -202,7 +219,7 @@ function paint(){
   const db=load();
   cAll.textContent=db.subs.length; cLive.textContent=db.subs.filter(live).length; cOn.textContent=db.subs.filter(s=>s.active!==false).length; cDel.textContent=(db.deleted||[]).length;
   dashRows.innerHTML=db.subs.map(s=>"<tr><td>"+esc(s.name)+"</td><td>"+esc(s.phone)+"</td><td>"+esc(s.code)+"</td><td class='"+(s.active===false?"off":"ok")+"'>"+(s.active===false?"ملغي":"شغال")+"</td></tr>").join("")||"<tr><td colspan='4'>لا يوجد</td></tr>";
-  listRows.innerHTML=db.subs.map(s=>"<tr><td>"+esc(s.name)+"</td><td>"+esc(s.phone)+"</td><td><b>"+esc(s.code)+"</b></td><td>"+esc((s.gender||"-")+" / "+(s.weight||"-")+"كجم / "+(s.height||"-")+"سم / "+(s.age||"-"))+"</td><td><a class='wa' target='_blank' href='"+waHref(s.phone,"أهلاً "+(s.name||"")+" تم الاشتراك في GymHub. كودك: "+s.code)+"'></a></td><td class='row'><button class='btn ghost' onclick=\"editSub('"+s.id+"')\">تعديل</button><button class='btn ghost' onclick=\"toggle('"+s.id+"')\">"+(s.active===false?"تشغيل":"إلغاء")+"</button><button class='btn bad' onclick=\"delSub('"+s.id+"')\">حذف</button></td></tr>").join("")||"<tr><td colspan='6'>لا يوجد</td></tr>";
+  listRows.innerHTML=db.subs.map(s=>`<div class="sub-card"><b>${esc(s.name)}</b><div class="sub-meta">${esc(s.phone)} · كود ${esc(s.code)}<br>${esc((s.gender||"-")+" · "+(s.weight||"-")+" كجم · "+(s.height||"-")+" سم · "+(s.age||"-"))}<br>${s.active===false?"ملغي":"شغال"}</div><div class="row" style="margin-top:8px"><a class="btn" target="_blank" href="${waHref(s.phone,"أهلاً "+(s.name||"")+" تم الاشتراك في GymHub. كودك: "+s.code)}">واتساب</a><button class="btn ghost" onclick="editSub('${s.id}')">تعديل</button><button class="btn ghost" onclick="toggle('${s.id}')">${s.active===false?"تشغيل":"إلغاء"}</button><button class="btn bad" onclick="delSub('${s.id}')">حذف</button></div></div>`).join("")||"<div class='hint'>لا يوجد مشتركين</div>";
   ["brandName","brandSub","loginTitle","loginDesc","footerNote","credit","imgGym","imgHome","imgUpper","imgLower","imgRest","ahmedWa","ahmedIg","ahmedTt","yassinWa","yassinIg","yassinTt","adminPass"].forEach(function(k){var el=document.getElementById(k); if(el&&db[k]!=null) el.value=db[k];});
 }
 function genCode(){return Math.random().toString(36).slice(2,6).toUpperCase()+"-"+Math.floor(1000+Math.random()*9000)}
