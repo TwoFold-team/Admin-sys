@@ -9,14 +9,14 @@
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-database-compat.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#0b1016;--card:#141c26;--elev:#1b2531;--line:#2a3848;--acc:#7eb8c9;--text:#e7eef5;--muted:#93a4b5;--ok:#7dcea0;--bad:#e08b8b}
+:root{--bg:#f3f1ec;--card:#fff;--elev:#f7f5f1;--line:#e4dfd6;--acc:#1f6f5b;--text:#1c1a17;--muted:#6d675f;--ok:#1f6f5b;--bad:#b42318}
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{width:100%;max-width:100%;overflow-x:hidden}
 body{font-family:Cairo,system-ui,sans-serif;background:var(--bg);color:var(--text)}
 button,input,select,textarea{font-family:inherit;font-size:16px}
 input,select,textarea{width:100%;background:var(--elev);border:1px solid var(--line);color:var(--text);border-radius:10px;padding:10px 12px}
 label{display:block;color:var(--muted);font-size:.78rem;margin:9px 0 4px}
-.btn{border:0;background:var(--acc);color:#081018;font-weight:700;padding:9px 13px;border-radius:10px;cursor:pointer}
+.btn{border:0;background:var(--acc);color:#fff;font-weight:700;padding:9px 13px;border-radius:10px;cursor:pointer}
 .btn.ghost{background:var(--elev);color:var(--text);border:1px solid var(--line)}
 .btn.bad{background:#5a2a2a;color:#ffd6d6}
 #login{min-height:100dvh;display:grid;place-items:center;padding:16px}
@@ -24,10 +24,10 @@ label{display:block;color:var(--muted);font-size:.78rem;margin:9px 0 4px}
 .err{display:none;color:var(--bad);margin-top:8px}
 #app{display:none}
 .shell{display:grid;grid-template-columns:230px 1fr;min-height:100dvh}
-.side{background:#0e141c;border-left:1px solid var(--line);padding:18px 10px}
-.side h2{color:var(--acc);margin:4px 10px 14px}
-.nav button{display:block;width:100%;text-align:right;background:none;border:0;color:var(--muted);padding:10px 12px;border-radius:10px;cursor:pointer}
-.nav button.on,.nav button:hover{background:#1b2836;color:#fff}
+.side{background:#17352e;border-left:1px solid #122822;padding:18px 10px;color:#fff}
+.side h2{color:#d7efe6;margin:4px 10px 14px}
+.nav button{display:block;width:100%;text-align:right;background:none;border:0;color:#cfe6dc;padding:10px 12px;border-radius:10px;cursor:pointer}
+.nav button.on,.nav button:hover{background:#1f6f5b;color:#fff}
 .main{padding:18px 18px 50px}
 .page{display:none}.page.on{display:block}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin:12px 0}
@@ -195,10 +195,14 @@ th,td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:right}
 <h1>العناوين والنصوص</h1>
 <label>اسم المنصة</label><input id="brandName">
 <label>العنوان الفرعي</label><input id="brandSub">
+<label>عنوان الترحيب</label><input id="welcomeH">
+<label>فقرة الترحيب</label><textarea id="welcomeP" rows="4"></textarea>
+<label>تلميح الرئيسية</label><input id="homeHintTxt">
 <label>عنوان الدخول</label><input id="loginTitle">
 <label>وصف الدخول</label><input id="loginDesc">
 <label>نص الفوتر</label><textarea id="footerNote" rows="3"></textarea>
 <label>حقوق التصميم</label><input id="credit">
+<label>عنوان الشات</label><input id="chatTitle">
 <button class="btn" style="margin-top:12px" type="button" onclick="saveSite()">حفظ</button>
 </div>
 </div>
@@ -302,7 +306,7 @@ function paint(){
   $("cDel").textContent=(db.deleted||[]).length;
   $("dashRows").innerHTML=db.subs.map(s=>{const off=s.active===false||(s.expiresAt&&Date.now()>s.expiresAt); return "<tr><td>"+esc(s.name)+"</td><td>"+esc(s.phone)+"</td><td>"+esc(s.code)+"</td><td class='"+(off?"off":"ok")+"'>"+(off?"منتهي/ملغي":"شغال")+"</td></tr>";}).join("")||"<tr><td colspan='4'>لا يوجد</td></tr>";
   $("listRows").innerHTML=db.subs.map(s=>`<div class="sub-card"><b>${esc(s.name)}</b><div class="sub-meta">${esc(s.phone)} · كود ${esc(s.code)}<br>${esc((s.gender||"-")+" · "+(s.weight||"-")+" كجم · "+(s.height||"-")+" سم · "+(s.age||"-"))}<br>${esc(s.package||"-")} · ${esc(s.months||1)} شهر<br>ينتهي ${s.expiresAt?new Date(+s.expiresAt).toLocaleDateString("ar-EG"):"-"}<br>${s.active===false?"ملغي":"شغال"}</div><div class="row" style="margin-top:8px"><a class="btn" target="_blank" href="${waHref(s.phone,"أهلاً "+(s.name||"")+" تم الاشتراك في GymHub. كودك: "+s.code)}">واتساب</a><button class="btn ghost" type="button" onclick="editSub('${s.id}')">تعديل</button><button class="btn ghost" type="button" onclick="toggle('${s.id}')">${s.active===false?"تشغيل":"إلغاء"}</button><button class="btn bad" type="button" onclick="delSub('${s.id}')">حذف</button></div></div>`).join("")||"<div class='hint'>لا يوجد مشتركين</div>";
-  ["brandName","brandSub","loginTitle","loginDesc","footerNote","credit","imgGym","imgHome","imgUpper","imgLower","imgRest","ahmedWa","ahmedIg","ahmedTt","yassinWa","yassinIg","yassinTt"].forEach(function(k){var el=$(k); if(el&&db[k]!=null) el.value=db[k];});
+  ["brandName","brandSub","welcomeH","welcomeP","homeHintTxt","loginTitle","loginDesc","footerNote","credit","chatTitle","imgGym","imgHome","imgUpper","imgLower","imgRest","ahmedWa","ahmedIg","ahmedTt","yassinWa","yassinIg","yassinTt"].forEach(function(k){var el=$(k); if(el&&db[k]!=null) el.value=db[k];});
 }
 function genCode(){const chars="ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; let a=""; for(let i=0;i<4;i++) a+=chars[Math.floor(Math.random()*chars.length)]; let b=""; for(let i=0;i<4;i++) b+=String(Math.floor(Math.random()*10)); return a+"-"+b;}
 function addSub(){
@@ -332,7 +336,7 @@ function toggle(id){const db=load(); const s=db.subs.find(x=>x.id===id); if(!s)r
 function delSub(id){if(!confirm("حذف؟"))return; const db=load(); const s=db.subs.find(x=>x.id===id); if(!s)return; db.subs=db.subs.filter(x=>x.id!==id); s.deletedAt=Date.now(); db.deleted.push(s); save(db); paint();}
 async function saveSite(){
   const db=load();
-  ["brandName","brandSub","loginTitle","loginDesc","footerNote","credit","imgGym","imgHome","imgUpper","imgLower","imgRest","ahmedWa","ahmedIg","ahmedTt","yassinWa","yassinIg","yassinTt"].forEach(function(k){var el=$(k); if(el) db[k]=el.value});
+  ["brandName","brandSub","welcomeH","welcomeP","homeHintTxt","loginTitle","loginDesc","footerNote","credit","chatTitle","imgGym","imgHome","imgUpper","imgLower","imgRest","ahmedWa","ahmedIg","ahmedTt","yassinWa","yassinIg","yassinTt"].forEach(function(k){var el=$(k); if(el) db[k]=el.value});
   delete db.adminPass; delete db.adminPassHash;
   save(db).then(function(){alert("اتحفظ على فايربيس")}).catch(function(e){alert(e.message)});
 }
@@ -374,7 +378,7 @@ function loadChats(){
   firebase.database().ref("platform/chats").once("value").then(function(snap){
     const val=snap.val()||{};
     const ids=Object.keys(val);
-    $("chatList").innerHTML=ids.map(id=>{const c=val[id]||{}; return `<div class="sub-card"><b>${esc(c.name||id)}</b><div class="sub-meta">${esc(c.phone||"")} · ${esc(c.code||"")}</div><button class="btn ghost" type="button" onclick="openChat('${id}')">فتح الشات</button></div>`;}).join("")||"<div class='hint'>لا توجد محادثات بعد</div>";
+    $("chatList").innerHTML=ids.map(id=>{const c=val[id]||{}; return `<div class="sub-card"><b>${esc(c.name||id)}</b><div class="sub-meta">${esc(c.phone||"")} · ${esc(c.code||"")}</div><div class="row"><button class="btn ghost" type="button" onclick="openChat('${id}')">فتح الشات</button><button class="btn bad" type="button" onclick="delThread('${id}')">حذف الشات</button></div></div>`;}).join("")||"<div class='hint'>لا توجد محادثات بعد</div>";
   });
 }
 function openChat(id){
@@ -382,8 +386,8 @@ function openChat(id){
   firebase.database().ref("platform/chats/"+id).once("value").then(function(s){const c=s.val()||{}; $("chatWho").textContent=(c.name||id)+" · "+(c.code||"");});
   firebase.database().ref("platform/chats/"+id+"/messages").limitToLast(80).on("value",function(snap){
     const val=snap.val()||{};
-    const arr=Object.keys(val).map(k=>val[k]).sort((a,b)=>(a.at||0)-(b.at||0));
-    $("chatMsgs").innerHTML=arr.map(m=>{const mine=m.from==="admin"; const tm=m.at?new Date(m.at).toLocaleTimeString("ar-EG",{hour:"2-digit",minute:"2-digit"}):""; return `<div style="max-width:80%;padding:8px 12px;border-radius:14px;margin:6px 0;${mine?"margin-right:auto;background:#005c4b;color:#fff":"margin-left:auto;background:#202c33;color:#e9edef"}">${esc(m.text||"")}<small style="display:block;opacity:.7;font-size:.7rem;margin-top:4px">${mine?"أنت":"العميل"} · ${tm}</small></div>`;}).join("");
+    const arr=Object.keys(val).map(k=>Object.assign({_k:k},val[k])).sort((a,b)=>(a.at||0)-(b.at||0));
+    $("chatMsgs").innerHTML=arr.map(m=>{const mine=m.from==="admin"; const tm=m.at?new Date(m.at).toLocaleTimeString("ar-EG",{hour:"2-digit",minute:"2-digit"}):""; return `<div style="max-width:82%;padding:8px 12px;border-radius:16px 16px 4px 16px;margin:6px 0;${mine?"margin-right:auto;background:#d9fdd3;color:#111":"margin-left:auto;background:#fff;color:#111"}">${esc(m.text||"")}<small style="display:block;opacity:.65;font-size:.7rem;margin-top:4px">${mine?"أنت":"العميل"} · ${tm} · <button type="button" onclick="delMsg('${id}','${m._k}')" style="border:0;background:none;color:#b42318">حذف</button></small></div>`;}).join("");
   });
 }
 function sendAdminChat(){
@@ -393,6 +397,8 @@ function sendAdminChat(){
   firebase.database().ref("platform/chats/"+currentChat).update({updated:Date.now()});
   $("adminChat").value="";
 }
+function delThread(id){if(!confirm("حذف الشات كله؟"))return; firebase.database().ref("platform/chats/"+id).remove().then(loadChats); $("chatThread").style.display="none";}
+function delMsg(id,k){firebase.database().ref("platform/chats/"+id+"/messages/"+k).remove();}
 function exportDB(){const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([JSON.stringify(load(),null,2)],{type:"application/json"})); a.download="gymhub-backup.json"; a.click()}
 function importDB(e){const f=e.target.files[0]; if(!f)return; const r=new FileReader(); r.onload=function(){try{save(JSON.parse(r.result)).then(function(){paint();alert("تم")})}catch(err){alert("ملف غلط")}}; r.readAsText(f)}
 document.getElementById("pass").addEventListener("keypress",e=>{if(e.key==="Enter")login()});
