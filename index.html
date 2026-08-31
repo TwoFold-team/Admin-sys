@@ -71,6 +71,8 @@ th,td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:right}
 <button type="button" onclick="go('add',this)">إضافة مشترك</button>
 <button type="button" onclick="go('list',this)">المشتركين</button>
 <button type="button" onclick="go('pays',this)">الاشتراكات</button>
+<button type="button" onclick="go('follow',this)">متابعة المشتركين</button>
+<button type="button" onclick="go('shop',this)">المتجر</button>
 <button type="button" onclick="go('chat',this)">الدردشة مع المشتركين</button>
 <button type="button" onclick="go('systems',this)">الأنظمة والتمارين</button>
 <button type="button" onclick="go('text',this)">العناوين والنصوص</button>
@@ -113,6 +115,20 @@ th,td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:right}
 </div>
 <div class="page" id="list">
 <h1>المشتركين</h1>
+<div class="row" style="margin:8px 0">
+<button class="btn ghost" type="button" onclick="filterSubs('all')">الكل</button>
+<button class="btn ghost" type="button" onclick="filterSubs('soon')">ينتهي خلال 3 أيام</button>
+<button class="btn ghost" type="button" onclick="filterSubs('trial')">تجربة مجانية</button>
+<button class="btn ghost" type="button" onclick="filterSubs('due')">متأخر دفع</button>
+<button class="btn ghost" type="button" onclick="filterSubs('quiet')">من غير نشاط أسبوع</button>
+</div>
+<div class="row" style="margin:8px 0">
+<button class="btn ghost" type="button" onclick="filterSubs('all')">الكل</button>
+<button class="btn ghost" type="button" onclick="filterSubs('soon')">ينتهي خلال 3 أيام</button>
+<button class="btn ghost" type="button" onclick="filterSubs('trial')">تجربة مجانية</button>
+<button class="btn ghost" type="button" onclick="filterSubs('due')">متأخر دفع</button>
+<button class="btn ghost" type="button" onclick="filterSubs('quiet')">من غير نشاط أسبوع</button>
+</div>
 <div class="sub-list" id="listRows"></div>
 <div class="card" id="editBox" style="display:none;max-width:520px;margin-top:12px">
 <h3>تعديل بيانات المشترك</h3>
@@ -128,12 +144,20 @@ th,td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:right}
 <option value="شهرية 150">الباقة الشهرية · 150</option><option value="3 شهور 500">باقة 3 شهور · 500</option><option value="6 شهور 850">باقة 6 شهور · 850</option><option value="سنوية 1500">الباقة السنوية · 1500</option></select>
 <label>المدفوع</label><input id="ePaid" type="number">
 <label>المتبقي</label><input id="eRemain" type="number">
+<label>نقاط العميل</label><input id="ePts" type="number">
+<label>الشارة</label><select id="eBadge"><option value="">تلقائي</option><option>مبتدئ</option><option>منتظم</option><option>ملتزم</option></select>
 <button class="btn" style="margin-top:10px" type="button" onclick="saveEdit()">حفظ التعديل</button>
 </div>
 </div>
 <div class="page" id="chat">
 <h1>الدردشة مع المشتركين</h1>
 <p class="hint">كل عميل له شات لوحده. افتح المحادثة وارد عليه.</p>
+<div class="row" style="margin:8px 0">
+<button class="btn ghost" type="button" onclick="tplChat('welcome')">ترحيب</button>
+<button class="btn ghost" type="button" onclick="tplChat('wait')">انتظار دفع</button>
+<button class="btn ghost" type="button" onclick="tplChat('cancel')">إلغاء</button>
+<button class="btn ghost" type="button" onclick="tplChat('week')">تشجيع الأسبوع</button>
+</div>
 <div class="sub-list" id="chatList"></div>
 <div class="card" id="chatThread" style="display:none;margin-top:12px;padding:0;overflow:hidden">
 <div style="background:#075e54;color:#fff;padding:12px;font-weight:800" id="chatWho">الدردشة مع الكابتن</div>
@@ -143,6 +167,19 @@ th,td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:right}
 <button class="btn" type="button" onclick="sendAdminChat()">إرسال</button>
 </div>
 </div>
+</div>
+<div class="page" id="follow">
+<h1>متابعة المشتركين</h1>
+<p class="hint">الوزن والصور اللي العميل بيبعتها من صفحة المتابعة.</p>
+<div class="sub-list" id="followRows"></div>
+</div>
+<div class="page" id="shop">
+<h1>المتجر والخصومات</h1>
+<p class="hint">عدّل نقاط كل خصم. الطلبات الجديدة تظهر تحت.</p>
+<div class="card" id="shopEdit"></div>
+<button class="btn" type="button" onclick="saveOffers()">حفظ الخصومات</button>
+<h3 style="margin-top:16px">طلبات الاستبدال</h3>
+<div class="sub-list" id="redeemRows"></div>
 </div>
 <div class="page" id="pays">
 <h1>الاشتراكات والمدفوعات</h1>
@@ -203,6 +240,11 @@ th,td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:right}
 <label>نص الفوتر</label><textarea id="footerNote" rows="3"></textarea>
 <label>حقوق التصميم</label><input id="credit">
 <label>عنوان الشات</label><input id="chatTitle">
+<label>تحدي الأسبوع</label><input id="challenge" placeholder="5 تمارين ظهر قبل الجمعة">
+<label>قالب أكل خفيف</label><textarea id="dietLight" rows="3"></textarea>
+<label>قالب أكل متوسط</label><textarea id="dietMid" rows="3"></textarea>
+<label>قالب أكل عالي</label><textarea id="dietHigh" rows="3"></textarea>
+<label>بدائل الأكل</label><textarea id="foodAlt" rows="3"></textarea>
 <button class="btn" style="margin-top:12px" type="button" onclick="saveSite()">حفظ</button>
 </div>
 </div>
@@ -289,7 +331,7 @@ function login(){
 }
 function logout(){sessionStorage.removeItem("ykAdmin");location.reload()}
 function openApp(){$("login").style.display="none";$("app").style.display="block"; firebase.database().ref("platform").once("value").then(function(snap){var d=snap.val(); if(d){if(d.subs&&!Array.isArray(d.subs)) d.subs=Object.values(d.subs); if(d.deleted&&!Array.isArray(d.deleted)) d.deleted=Object.values(d.deleted); saveLocal(Object.assign(load(),d));} paint();}).catch(function(){paint();});}
-function go(id,btn){document.querySelectorAll(".page").forEach(pg=>pg.classList.remove("on"));document.querySelectorAll(".nav button").forEach(b=>b.classList.remove("on"));$(id).classList.add("on");if(btn)btn.classList.add("on"); if(id==="systems") drawSystems(); if(id==="pays") paintPay(); if(id==="chat") loadChats();}
+function go(id,btn){document.querySelectorAll(".page").forEach(pg=>pg.classList.remove("on"));document.querySelectorAll(".nav button").forEach(b=>b.classList.remove("on"));$(id).classList.add("on");if(btn)btn.classList.add("on"); if(id==="systems") drawSystems(); if(id==="pays") paintPay(); if(id==="chat") loadChats(); if(id==="follow") loadFollow(); if(id==="shop") loadShop();}
 function packMonthsOf(val){val=String(val||""); if(val.includes("تجربة")||val.includes("أيام")) return 0; if(val.includes("سنو")||val.includes("1500")||val.includes("12")) return 12; if(val.includes("6")||val.includes("850")) return 6; if(val.includes("3 شهور")||val.includes("500")) return 3; return 1;}
 function applyPack(s,pack,paid,remain){s.package=pack; s.months=packMonthsOf(pack); s.days=(String(pack).includes("تجربة")||String(pack).includes("أيام"))?3:0; s.paid=paid; s.remain=remain; const start=s.created||Date.now(); s.expiresAt=s.days? start+s.days*24*60*60*1000 : start+Math.max(s.months,1)*30*24*60*60*1000; if(Date.now()>s.expiresAt) s.active=false; else if(s.active!==false) s.active=true; return s;}
 function paintPay(){
@@ -305,8 +347,8 @@ function paint(){
   $("cOn").textContent=db.subs.filter(s=>s.active!==false && !(s.expiresAt && Date.now()>s.expiresAt)).length;
   $("cDel").textContent=(db.deleted||[]).length;
   $("dashRows").innerHTML=db.subs.map(s=>{const off=s.active===false||(s.expiresAt&&Date.now()>s.expiresAt); return "<tr><td>"+esc(s.name)+"</td><td>"+esc(s.phone)+"</td><td>"+esc(s.code)+"</td><td class='"+(off?"off":"ok")+"'>"+(off?"منتهي/ملغي":"شغال")+"</td></tr>";}).join("")||"<tr><td colspan='4'>لا يوجد</td></tr>";
-  $("listRows").innerHTML=db.subs.map(s=>`<div class="sub-card"><b>${esc(s.name)}</b><div class="sub-meta">${esc(s.phone)} · كود ${esc(s.code)}<br>${esc((s.gender||"-")+" · "+(s.weight||"-")+" كجم · "+(s.height||"-")+" سم · "+(s.age||"-"))}<br>${esc(s.package||"-")} · ${esc(s.months||1)} شهر<br>ينتهي ${s.expiresAt?new Date(+s.expiresAt).toLocaleDateString("ar-EG"):"-"}<br>${s.active===false?"ملغي":"شغال"}</div><div class="row" style="margin-top:8px"><a class="btn" target="_blank" href="${waHref(s.phone,"أهلاً "+(s.name||"")+" تم الاشتراك في GymHub. كودك: "+s.code)}">واتساب</a><button class="btn ghost" type="button" onclick="editSub('${s.id}')">تعديل</button><button class="btn ghost" type="button" onclick="toggle('${s.id}')">${s.active===false?"تشغيل":"إلغاء"}</button><button class="btn bad" type="button" onclick="delSub('${s.id}')">حذف</button></div></div>`).join("")||"<div class='hint'>لا يوجد مشتركين</div>";
-  ["brandName","brandSub","welcomeH","welcomeP","homeHintTxt","loginTitle","loginDesc","footerNote","credit","chatTitle","imgGym","imgHome","imgUpper","imgLower","imgRest","ahmedWa","ahmedIg","ahmedTt","yassinWa","yassinIg","yassinTt"].forEach(function(k){var el=$(k); if(el&&db[k]!=null) el.value=db[k];});
+  const rows=db.subs.filter(s=>listFilter==="all"||(listFilter==="soon"&&isSoon(s))||(listFilter==="trial"&&isTrial(s))||(listFilter==="due"&&isDue(s))||(listFilter==="quiet"&&isQuiet(s))); $("listRows").innerHTML=rows.map(s=>`<div class="sub-card"><b>${esc(s.name)}</b><div class="sub-meta">${esc(s.phone)} · كود ${esc(s.code)}<br>${esc((s.gender||"-")+" · "+(s.weight||"-")+" كجم · "+(s.height||"-")+" سم · "+(s.age||"-"))}<br>${esc(s.package||"-")} · ${esc(s.months||1)} شهر<br>ينتهي ${s.expiresAt?new Date(+s.expiresAt).toLocaleDateString("ar-EG"):"-"}<br>${s.active===false?"ملغي":"شغال"}</div><div class="row" style="margin-top:8px"><a class="btn" target="_blank" href="${waHref(s.phone,"أهلاً "+(s.name||"")+" تم الاشتراك في GymHub. كودك: "+s.code)}">واتساب</a><a class="btn ghost" target="_blank" href="${renewMsg(s)}">تجديد</a><a class="btn ghost" target="_blank" href="${weekReport(s)}">تقرير الأسبوع</a><button class="btn ghost" type="button" onclick="viewProg('${s.id}')">صور/وزن</button><button class="btn ghost" type="button" onclick="editSub('${s.id}')">تعديل</button><button class="btn ghost" type="button" onclick="toggle('${s.id}')">${s.active===false?"تشغيل":"إلغاء"}</button><button class="btn bad" type="button" onclick="delSub('${s.id}')">حذف</button></div></div>`).join("")||"<div class='hint'>لا يوجد مشتركين</div>";
+  ["brandName","brandSub","welcomeH","welcomeP","homeHintTxt","loginTitle","loginDesc","footerNote","credit","chatTitle","challenge","dietLight","dietMid","dietHigh","foodAlt","imgGym","imgHome","imgUpper","imgLower","imgRest","ahmedWa","ahmedIg","ahmedTt","yassinWa","yassinIg","yassinTt"].forEach(function(k){var el=$(k); if(el&&db[k]!=null) el.value=db[k];});
 }
 function genCode(){const chars="ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; let a=""; for(let i=0;i<4;i++) a+=chars[Math.floor(Math.random()*chars.length)]; let b=""; for(let i=0;i<4;i++) b+=String(Math.floor(Math.random()*10)); return a+"-"+b;}
 function addSub(){
@@ -323,12 +365,12 @@ function addSub(){
 function editSub(id){
   const s=load().subs.find(x=>x.id===id); if(!s)return;
   $("editBox").style.display="block";
-  $("eId").value=s.id; $("eName").value=s.name||""; $("ePhone").value=s.phone||""; $("eCode").value=s.code||""; $("eGender").value=s.gender||"boy"; $("eW").value=s.weight||""; $("eH").value=s.height||""; $("eA").value=s.age||"";
+  $("eId").value=s.id; $("eName").value=s.name||""; $("ePhone").value=s.phone||""; $("eCode").value=s.code||""; $("eGender").value=s.gender||"boy"; $("eW").value=s.weight||""; $("eH").value=s.height||""; $("eA").value=s.age||""; if($("ePts")) $("ePts").value=s.pts||0; if($("eBadge")) $("eBadge").value=s.badge||"";
   if($("ePack")){$("ePack").value=s.package||"شهرية 150"; $("ePaid").value=s.paid||0; $("eRemain").value=s.remain||0;}
 }
 function saveEdit(){
   const db=load(); const s=db.subs.find(x=>x.id===$("eId").value); if(!s)return;
-  s.name=$("eName").value.trim(); s.phone=$("ePhone").value.trim(); s.code=$("eCode").value.trim(); s.gender=$("eGender").value; s.weight=$("eW").value; s.height=$("eH").value; s.age=$("eA").value;
+  s.name=$("eName").value.trim(); s.phone=$("ePhone").value.trim(); s.code=$("eCode").value.trim(); s.gender=$("eGender").value; s.weight=$("eW").value; s.height=$("eH").value; s.age=$("eA").value; if($("ePts")) s.pts=+$("ePts").value||0; if($("eBadge")) s.badge=$("eBadge").value; if($("ePts")) firebase.database().ref("platform/progress/"+s.id+"/pts").set(s.pts);
   if($("ePack")) applyPack(s,$("ePack").value,$("ePaid").value,$("eRemain").value);
   save(db).then(function(){paint(); alert("اتحفظت البيانات");});
 }
@@ -336,7 +378,7 @@ function toggle(id){const db=load(); const s=db.subs.find(x=>x.id===id); if(!s)r
 function delSub(id){if(!confirm("حذف؟"))return; const db=load(); const s=db.subs.find(x=>x.id===id); if(!s)return; db.subs=db.subs.filter(x=>x.id!==id); s.deletedAt=Date.now(); db.deleted.push(s); save(db); paint();}
 async function saveSite(){
   const db=load();
-  ["brandName","brandSub","welcomeH","welcomeP","homeHintTxt","loginTitle","loginDesc","footerNote","credit","chatTitle","imgGym","imgHome","imgUpper","imgLower","imgRest","ahmedWa","ahmedIg","ahmedTt","yassinWa","yassinIg","yassinTt"].forEach(function(k){var el=$(k); if(el) db[k]=el.value});
+  ["brandName","brandSub","welcomeH","welcomeP","homeHintTxt","loginTitle","loginDesc","footerNote","credit","chatTitle","challenge","dietLight","dietMid","dietHigh","foodAlt","imgGym","imgHome","imgUpper","imgLower","imgRest","ahmedWa","ahmedIg","ahmedTt","yassinWa","yassinIg","yassinTt"].forEach(function(k){var el=$(k); if(el) db[k]=el.value});
   delete db.adminPass; delete db.adminPassHash;
   save(db).then(function(){alert("اتحفظ على فايربيس")}).catch(function(e){alert(e.message)});
 }
@@ -399,6 +441,51 @@ function sendAdminChat(){
 }
 function delThread(id){if(!confirm("حذف الشات كله؟"))return; firebase.database().ref("platform/chats/"+id).remove().then(loadChats); $("chatThread").style.display="none";}
 function delMsg(id,k){firebase.database().ref("platform/chats/"+id+"/messages/"+k).remove();}
+
+let listFilter="all";
+function filterSubs(k){listFilter=k; paint();}
+function isSoon(s){return s.expiresAt && (+s.expiresAt-Date.now())>0 && (+s.expiresAt-Date.now())<=3*86400000;}
+function isTrial(s){const p=String(s.package||""); return p.includes("تجربة")||p.includes("أيام")||+s.days===3;}
+function isDue(s){return +s.remain>0;}
+function isQuiet(s){return !s.lastSeen || (Date.now()-s.lastSeen)>7*86400000;}
+function tplChat(kind){
+  const map={welcome:"أهلاً بيك في GymHub، اشتراكك اشتغل. لو محتاج توضيح في الجدول ابعت.",wait:"استلمنا طلبك والاشتراك قيد تأكيد الدفع.",cancel:"تم إلغاء الاشتراك. لو حابب ترجع ابعتلنا.",week:"عاش يا بطل، كمّل تحدي الأسبوع وسجّل التمارين."};
+  if($("adminChat")) $("adminChat").value=map[kind]||"";
+}
+function renewMsg(s){return waHref(s.phone,"تجديد اشتراك GymHub\nالاسم: "+(s.name||"")+"\nالكود: "+(s.code||"")+"\nالباقة: "+(s.package||"")+"\nينتهي: "+(s.expiresAt?new Date(+s.expiresAt).toLocaleDateString("ar-EG"):"-"));}
+function weekReport(s){return waHref(s.phone,"تقرير الأسبوع - GymHub\nالاسم: "+(s.name||"")+"\nالكود: "+(s.code||"")+"\nالباقة: "+(s.package||"")+"\nملاحظة الكابتن: commited أيامك تمام، كمّل الجدول وجاوبني على الوزن.");}
+function viewProg(id){
+  firebase.database().ref("platform/progress/"+id).once("value").then(function(snap){
+    const v=snap.val()||{};
+    alert("وزن: "+JSON.stringify(v.weights||[])+"\nصور: "+JSON.stringify(v.photos||{}));
+  });
+}
+
+function loadFollow(){
+  firebase.database().ref("platform/follows").limitToLast(50).on("value",function(snap){
+    const val=snap.val()||{};
+    const arr=Object.keys(val).map(k=>Object.assign({_k:k},val[k])).sort((a,b)=>(b.at||0)-(a.at||0));
+    $("followRows").innerHTML=arr.map(f=>`<div class="sub-card"><b>${esc(f.name||"-")}</b><div class="sub-meta">${esc(f.phone||"")} · ${esc(f.code||"")} · ${esc(f.gender||"")}<br>الوزن: ${esc(f.weight||"-")} · ${f.at?new Date(f.at).toLocaleString("ar-EG"):""}</div>${f.photo?`<img src="${f.photo}" style="width:100%;max-height:240px;object-fit:cover;border-radius:12px;margin:8px 0">`:""}<div class="row"><button class="btn" type="button" onclick="openChat('${f.id}')">رد في الشات</button></div></div>`).join("")||"<div class='hint'>لا توجد متابعات بعد</div>";
+  });
+}
+function loadShop(){
+  const db=load();
+  const offers=db.shopOffers||[{pts:100,off:10},{pts:180,off:15},{pts:260,off:20},{pts:340,off:25},{pts:420,off:30},{pts:500,off:35},{pts:600,off:40}];
+  $("shopEdit").innerHTML=offers.map((o,i)=>`<div class="row" style="margin:6px 0"><label>خصم ${o.off}٪</label><input id="offPts${i}" type="number" value="${o.pts}"><input id="offVal${i}" type="number" value="${o.off}"></div>`).join("");
+  window._offerCount=offers.length;
+  firebase.database().ref("platform/redeems").limitToLast(40).on("value",function(snap){
+    const val=snap.val()||{};
+    const arr=Object.keys(val).map(k=>val[k]).sort((a,b)=>(b.at||0)-(a.at||0));
+    $("redeemRows").innerHTML=arr.map(r=>`<div class="sub-card"><b>${esc(r.name||"-")}</b><div class="sub-meta">${esc(r.code||"")} · ${esc(r.phone||"")}<br>خصم ${esc(r.off)}٪ مقابل ${esc(r.pts)} نقطة · ${r.at?new Date(r.at).toLocaleString("ar-EG"):""}</div></div>`).join("")||"<div class='hint'>لا توجد طلبات</div>";
+  });
+}
+function saveOffers(){
+  const db=load();
+  const n=window._offerCount||7;
+  db.shopOffers=[];
+  for(let i=0;i<n;i++){ db.shopOffers.push({pts:+$("offPts"+i).value||0, off:+$("offVal"+i).value||0}); }
+  save(db).then(function(){alert("اتحفظت الخصومات");});
+}
 function exportDB(){const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([JSON.stringify(load(),null,2)],{type:"application/json"})); a.download="gymhub-backup.json"; a.click()}
 function importDB(e){const f=e.target.files[0]; if(!f)return; const r=new FileReader(); r.onload=function(){try{save(JSON.parse(r.result)).then(function(){paint();alert("تم")})}catch(err){alert("ملف غلط")}}; r.readAsText(f)}
 document.getElementById("pass").addEventListener("keypress",e=>{if(e.key==="Enter")login()});
