@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>أدمن | GymHub</title>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-database-compat.js"></script>
+<style>
+:root{--bg:#070506;--card:#141014;--line:#2a1c1e;--txt:#f4ecea;--mut:#b39896;--pri:#e11d2e;--pri2:#9f1239;--ok:#16a34a}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{width:100%;max-width:100%;overflow-x:hidden}
+body{font-family:Cairo,system-ui,sans-serif;background:var(--bg);color:var(--txt);min-height:100dvh;touch-action:manipulation}
+button,input,select,textarea{font:inherit}
+input,select,textarea{width:100%;background:#0e0a0b;border:1px solid var(--line);color:var(--txt);border-radius:12px;padding:11px;margin:6px 0}
+.btn{border:0;background:linear-gradient(180deg,#ff3b4e,var(--pri));color:#fff;font-weight:800;padding:10px 14px;border-radius:12px}
+.btn.ghost{background:transparent;border:1px solid var(--line);color:var(--txt)}
+.btn.bad{background:#7f1d1d}
+.hint{color:var(--mut);line-height:1.8}
+.shell{display:block;min-height:100dvh}
+.side{position:sticky;top:0;z-index:50;background:#12080a;border-bottom:1px solid var(--line);padding:8px 10px}
+.brand{font-weight:900;color:var(--pri);padding:4px 4px 8px;letter-spacing:.04em;font-size:14px}
+.nav{display:flex;flex-wrap:wrap;gap:6px}
+.nav button{width:auto;text-align:center;background:#1a0d10;border:1px solid var(--line);color:#f0d7d5;padding:8px 10px;border-radius:999px;font-size:13px;font-weight:700}
+.nav button.on,.nav button:hover{background:var(--pri);border-color:var(--pri);color:#fff}
+.main{padding:12px}
+.page{display:none}
+.page.on{display:block}
+@media(min-width:900px){
+  .shell{display:grid;grid-template-columns:220px 1fr}
+  .side{height:100dvh;border-bottom:0;border-left:1px solid var(--line);overflow:auto}
+  .nav{display:block}
+  .nav button{display:block;width:100%;text-align:right;border-radius:10px;margin-bottom:6px}
+}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:12px 0}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px}
+.stat small{color:var(--mut);display:block}
+.card,.sub-card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin:10px 0}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+#login{min-height:100dvh;display:grid;place-items:center;padding:20px}
+#login .box{width:min(420px,100%);background:var(--card);border:1px solid var(--line);border-radius:22px;padding:22px}
+.err{display:none;color:#fca5a5;margin-top:8px}
+#app{display:none}
+table{width:100%;border-collapse:collapse}
+th,td{padding:8px;border-bottom:1px solid var(--line);text-align:right;font-size:.9rem}
+.thumb{width:100%;max-height:140px;object-fit:cover;border-radius:10px;margin:6px 0}
+.paid-wrap{display:flex;flex-wrap:wrap;gap:8px}
+.paid-mini{flex:1 1 46%;padding:10px;font-size:13px}
+
+  .side{position:sticky;top:0;z-index:20;height:auto;max-height:none;overflow:visible;background:#10080a;border-left:0;border-bottom:1px solid var(--line);padding:8px 10px}
+  .nav{display:flex;flex-wrap:nowrap;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px}
+  .nav button{width:auto;white-space:nowrap;flex:0 0 auto}
+  .main{padding-top:8px}
+}
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+<div id="login">
+  <div class="box">
+    <h2>لوحة الأدمن</h2>
+    <p class="hint">GymHub · TwoFold</p>
+    <input type="password" id="pass" placeholder="كود الأدمن" inputmode="numeric">
+    <button class="btn" type="button" onclick="login()">دخول</button>
+    <div class="err" id="err">الكود غلط</div>
+  </div>
+</div>
+<div id="app">
+<div class="shell">
+  <aside class="side">
+    <div class="brand">GYMHUB ADMIN</div>
+    <nav class="nav">
+      <button class="on" onclick="go('dash',this)">الرئيسية</button>
+      <button onclick="go('texts',this)">النصوص والعناوين</button>
+      <button onclick="go('imgs',this)">صور المنصة</button>
+      <button onclick="go('list',this)">المشتركين</button>
+      <button onclick="go('data',this)">بيانات المشتركين</button>
+      <button onclick="go('add',this)">إضافة مشترك</button>
+      <button onclick="go('reqs',this)">طلبات الاشتراك</button>
+      <button onclick="go('payok',this)">تأكيد التحويل</button>
+      <button onclick="go('pays',this)">الاشتراكات والدفع</button>
+      <button onclick="go('shop',this)">المتجر</button>
+      <button onclick="go('chat',this)">الدردشة</button>
+      <button onclick="go('follow',this)">متابعة المشتركين</button>
+      <button onclick="go('sec',this)">الحماية</button>
+    </nav>
+  </aside>
+  <main class="main">
+    <div class="page on" id="dash">
+      <h1>لوحة التحكم</h1>
+      <div class="stats">
+        <div class="stat"><small>الاشتراكات</small><b id="cAll">0</b></div>
+        <div class="stat"><small>نشط</small><b id="cOn">0</b></div>
+        <div class="stat"><small>محذوف</small><b id="cDel">0</b></div>
+        <div class="stat"><small>طلبات جديدة</small><b id="cReq">0</b></div>
+      </div>
+    </div>
+
+    <div class="page" id="texts">
+      <h1>النصوص والعناوين</h1>
+      <p class="hint">أي تعديل هنا يظهر في المنصة بعد الحفظ.</p>
+      <label>اسم المنصة</label><input id="tBrand">
+      <label>عنوان الترحيب</label><input id="tWH">
+      <label>فقرة الترحيب</label><textarea id="tWP" rows="4"></textarea>
+      <label>تلميح الرئيسية</label><input id="tHint">
+      <label>عنوان الشات</label><input id="tChat">
+      <label>بنود الخدمة</label><input id="tFoot">
+      <label>سطر التصميم</label><input id="tCredit">
+      <button class="btn" type="button" onclick="saveTexts()">حفظ النصوص</button>
+    </div>
+
+    <div class="page" id="imgs">
+      <h1>صور المنصة والتمارين</h1>
+      <p class="hint">ارفع صورة من المعرض. هتتسجل في المنصة.</p>
+      <div id="imgGrid"></div>
+    </div>
+
+    <div class="page" id="list">
+      <h1>المشتركين وملفاتهم</h1>
+      <div id="listRows"></div>
+    </div>
+
+    <div class="page" id="add">
+      <h1>إضافة مشترك</h1>
+      <input id="nName" placeholder="الاسم">
+      <input id="nPhone" placeholder="الموبايل">
+      <input id="nCode" placeholder="الكود — فاضي يتولد">
+      <select id="nGender"><option value="boy">Boy</option><option value="girl">Girl</option></select>
+      <input id="nW" type="number" placeholder="الوزن">
+      <input id="nH" type="number" placeholder="الطول">
+      <input id="nA" type="number" placeholder="السن">
+      <select id="nPack">
+        <option value="تجربة 3 أيام">تجربة 3 أيام</option>
+        <option value="الباقة الشهرية">الباقة الشهرية</option>
+        <option value="باقة 3 شهور">باقة 3 شهور</option>
+        <option value="باقة 6 شهور">باقة 6 شهور</option>
+        <option value="الباقة السنوية">الباقة السنوية</option>
+      </select>
+      <input id="nPaid" type="number" placeholder="المدفوع">
+      <input id="nRemain" type="number" placeholder="المتبقي">
+      <button class="btn" type="button" onclick="addSub()">تسجيل</button>
+    </div>
+
+    <div class="page" id="reqs"><h1>طلبات الاشتراك</h1><div id="reqRows"></div></div>
+    <div class="page" id="payok"><h1>تأكيد التحويل</h1><div id="payReqRows"></div></div>
+    <div class="page" id="pays"><h1>الاشتراكات والدفع</h1><p class="hint">عدّل المدفوع والمتبقي والباقة لكل مشترك.</p><div id="payRows"></div></div>
+    <div class="page" id="data">
+      <h1>بيانات المشتركين</h1>
+      <input id="qSub" placeholder="سيرش بالاسم أو الكود أو الموبايل" oninput="paintData()">
+      <div class="row">
+        <select id="fPack" onchange="paintData()">
+          <option value="">كل الباقات</option>
+          <option>تجربة 3 أيام</option>
+          <option>الباقة الشهرية</option>
+          <option>باقة 3 شهور</option>
+          <option>باقة 6 شهور</option>
+          <option>الباقة السنوية</option>
+        </select>
+        <select id="fGen" onchange="paintData()">
+          <option value="">ولاد وبنات</option>
+          <option value="boy">ولاد فقط</option>
+          <option value="girl">بنات فقط</option>
+        </select>
+        <select id="fDebt" onchange="paintData()">
+          <option value="">كل الحالات</option>
+          <option value="debt">عليهم فلوس</option>
+          <option value="clear">مدفوع كامل</option>
+        </select>
+      </div>
+      <div id="dataRows"></div>
+    </div>
+    <div class="page" id="shop">
+      <h1>المتجر</h1>
+      <div id="shopEdit"></div>
+      <h3>عمليات الاستبدال</h3>
+      <div id="redeemRows"></div>
+    </div>
+    <div class="page" id="chat">
+      <h1>الدردشة مع الكابتن</h1>
+      <div id="chatList"></div>
+      <div class="card" id="chatThread" style="display:none">
+        <b id="chatWho"></b>
+        <div id="chatMsgs" style="max-height:360px;overflow:auto;min-height:180px;margin:8px 0"></div>
+        <div class="row"><input id="adminChat" placeholder="رسالة"><button class="btn" type="button" onclick="sendAdminChat()">إرسال</button></div>
+      </div>
+    </div>
+    <div class="page" id="follow"><h1>متابعة المشتركين</h1><div id="followRows"></div></div>
+    <div class="page" id="sec">
+      <h1>الحماية</h1>
+      <p class="hint">تغيير كود دخول الأدمن. الافتراضي 149252 لحد ما تغيّره.</p>
+      <input id="newPass" placeholder="الكود الجديد">
+      <button class="btn" type="button" onclick="savePass()">حفظ الكود</button>
+    </div>
+  </main>
+</div>
+</div>
+<script>
+const firebaseConfig={apiKey:"AIzaSyAY8K2_LztVoVX1F00zmvU4ehPj4ufGGAM",authDomain:"gymm-c58cb.firebaseapp.com",databaseURL:"https://gymm-c58cb-default-rtdb.europe-west1.firebasedatabase.app",projectId:"gymm-c58cb",storageBucket:"gymm-c58cb.firebasestorage.app",messagingSenderId:"1027476403509",appId:"1:1027476403509:web:a5890bf3608c6c6dc7087c"};
+try{if(!firebase.apps.length) firebase.initializeApp(firebaseConfig);}catch(e){}
+const REF=()=>firebase.database().ref("platform");
+const $=id=>document.getElementById(id);
+const esc=s=>String(s||"").replace(/[<>&"]/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;","\"":"&quot;"}[c]));
+let DB={subs:[],offers:[{pts:100,off:10},{pts:180,off:20},{pts:280,off:30},{pts:420,off:40}]};
+let CHAT_SID="";
+const IMG_KEYS=[
+  ["imgGym","صورة أنظمة الولاد"],
+  ["imgHome","صورة أنظمة البنات"],
+  ["boy-bench","بنج ولاد"],["boy-incline","بنج مائل ولاد"],["boy-pull","ظهر سحب ولاد"],["boy-row","تجديف ولاد"],
+  ["boy-press","كتف ولاد"],["boy-curl","دراع ولاد"],["boy-squat","سكوات ولاد"],["boy-rdl","ديدلفت ولاد"],
+  ["boy-lunge","لنج ولاد"],["boy-core","بلانك ولاد"],["boy-lat","رفع جانبي ولاد"],
+  ["girl-bench","صدر بنات"],["girl-pull","ظهر بنات"],["girl-press","كتف بنات"],["girl-curl","دراع بنات"],
+  ["girl-squat","سكوات بنات"],["girl-rdl","ديدلفت بنات"],["girl-lunge","لنج بنات"],["girl-hip","هيپ ثراست"],
+  ["girl-kick","كيك باك"],["girl-core","كور بنات"]
+];
+
+function genCode(){return Math.random().toString(36).slice(2,8).toUpperCase().padEnd(6,"X");}
+function monthsOf(p){if(/تجربة|أيام/.test(p))return 0; if(/سنو/.test(p))return 12; if(/6/.test(p))return 6; if(/3 شهور/.test(p))return 3; return 1;}
+function applyPack(s,pack,paid,remain){
+  s.package=pack; s.paid=+paid||0; s.remain=+remain||0; s.months=monthsOf(pack);
+  const ms=s.months?s.months*30*864e5:3*864e5;
+  s.expiresAt=Date.now()+ms; return s;
+}
+
+function asList(subs){
+  if(Array.isArray(subs)) return subs.filter(Boolean);
+  if(subs && typeof subs==="object") return Object.keys(subs).map(k=>Object.assign({id:subs[k]&&subs[k].id?subs[k].id:k}, subs[k]||{}));
+  return [];
+}
+function loadRemote(cb){
+  REF().once("value").then(snap=>{
+    const v=snap.val()||{};
+    DB.subs=asList(v.subs);
+    DB.offers=v.offers||DB.offers;
+    DB.site=v;
+    if(cb) cb(v);
+    paint();
+  });
+}
+function saveSubs(){
+  const obj={};
+  (DB.subs||[]).forEach(s=>{ if(s&&s.id) obj[s.id]=s; });
+  return REF().child("subs").set(obj);
+}
+function saveOne(s){
+  if(!s||!s.id) return Promise.resolve();
+  const i=DB.subs.findIndex(x=>x.id===s.id);
+  if(i>=0) DB.subs[i]=s; else DB.subs.push(s);
+  return REF().child("subs/"+s.id).set(s);
+}
+function waNum(p){return String(p||"").replace(/\D/g,"").replace(/^0/,"20");}
+function waHref(phone,text){return "https://api.whatsapp.com/send?phone="+waNum(phone)+"&text="+encodeURIComponent(text);}
+function waBtn(phone,text){
+  if(!phone) return "";
+  return `<a class="btn" style="background:#25d366;min-width:44px" href="${waHref(phone,text)}" target="_blank">واتساب</a>`;
+}
+
+function login(){
+  const v=$("pass").value.trim();
+  REF().child("sec/pass").once("value").then(s=>{
+    const real=s.val()||"149252";
+    if(v===String(real)){ sessionStorage.setItem("ykAdmin","1"); openApp(); }
+    else $("err").style.display="block";
+  }).catch(()=>{
+    if(v==="149252"){ sessionStorage.setItem("ykAdmin","1"); openApp(); }
+    else $("err").style.display="block";
+  });
+}
+function openApp(){ $("login").style.display="none"; $("app").style.display="block"; loadRemote(); startAlerts(); }
+
+function ping(title,body,tag){
+  if(navigator.serviceWorker && navigator.serviceWorker.controller){
+    navigator.serviceWorker.controller.postMessage({type:"notify",title,body,tag});
+  } else if(window.Notification && Notification.permission==="granted"){
+    new Notification(title,{body,tag});
+  }
+}
+function startAlerts(){
+  if(!window.Notification) return;
+  Notification.requestPermission();
+  if("serviceWorker" in navigator){
+    navigator.serviceWorker.register("./sw.js").catch(function(){});
+  }
+  const seen=JSON.parse(localStorage.getItem("gh_seen")||"{}");
+  function watch(path,title,textFn){
+    firebase.database().ref(path).on("child_added",function(snap){
+      const k=path+"/"+snap.key;
+      if(seen[k]) return;
+      seen[k]=1; localStorage.setItem("gh_seen",JSON.stringify(seen));
+      const v=snap.val()||{};
+      if((Date.now()-(v.at||0))>120000) return; // تجاهل القديم
+      ping(title, textFn(v), k);
+    });
+  }
+  watch("platform/requests","طلب اشتراك جديد", v=>(v.name||"عميل")+" · "+(v.package||"")+" · "+(v.phone||""));
+  watch("platform/payReqs","طلب تحويل جديد", v=>(v.name||"عميل")+" حوّل "+(v.amt||0)+"ج · "+(v.method||""));
+  watch("platform/redeems","طلب استبدال نقاط", v=>(v.name||"عميل")+" · كود "+(v.code||"-")+" · "+(v.pts||0)+" نقطة");
+}
+if(sessionStorage.getItem("ykAdmin")==="1") openApp();
+
+function go(id,btn){
+  document.querySelectorAll(".page").forEach(p=>p.classList.remove("on"));
+  document.querySelectorAll(".nav button").forEach(b=>b.classList.remove("on"));
+  $(id).classList.add("on"); if(btn) btn.classList.add("on");
+  if(id==="texts") fillTexts();
+  if(id==="imgs") fillImgs();
+  if(id==="list") paintList();
+  if(id==="reqs") loadReqs();
+  if(id==="payok") loadPayReqs();
+  if(id==="pays") paintPay();
+  if(id==="data") paintData();
+  if(id==="shop") fillShop();
+  if(id==="chat") loadChats();
+  if(id==="follow") loadFollow();
+}
+
+function paint(){
+  const subs=DB.subs||[];
+  $("cAll").textContent=subs.length;
+  $("cOn").textContent=subs.filter(s=>s.active!==false).length;
+  $("cDel").textContent=subs.filter(s=>s.active===false).length;
+}
+
+function fillTexts(){
+  const d=DB.site||{};
+  $("tBrand").value=d.brandName||"GymHub";
+  $("tWH").value=d.welcomeH||"";
+  $("tWP").value=d.welcomeP||"";
+  $("tHint").value=d.homeHintTxt||"";
+  $("tChat").value=d.chatTitle||"";
+  $("tFoot").value=d.footerNote||"";
+  $("tCredit").value=d.credit||"";
+}
+function saveTexts(){
+  REF().update({
+    brandName:$("tBrand").value, welcomeH:$("tWH").value, welcomeP:$("tWP").value,
+    homeHintTxt:$("tHint").value, chatTitle:$("tChat").value, footerNote:$("tFoot").value, credit:$("tCredit").value
+  }).then(()=>alert("اتحفظت النصوص"));
+}
+
+function fillImgs(){
+  const imgs=(DB.site&&DB.site.images)||{};
+  $("imgGrid").innerHTML=IMG_KEYS.map(([k,lab])=>`<div class="card"><b>${lab}</b>
+    ${imgs[k]?`<img class="thumb" src="${imgs[k]}">`:""}
+    <input type="file" accept="image/*" onchange="upImg('${k}',this)">
+  </div>`).join("");
+}
+function upImg(key,inp){
+  const f=inp.files&&inp.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=()=>REF().child("images/"+key).set(r.result).then(()=>{loadRemote(()=>fillImgs()); alert("اتحفظت الصورة");});
+  r.readAsDataURL(f);
+}
+
+function paintList(){
+  $("listRows").innerHTML=(DB.subs||[]).map(s=>`<div class="sub-card">
+    <b>${esc(s.name)}</b> · ${esc(s.code)} · ${esc(s.phone)}
+    <div class="hint">${esc(s.package||"")} · نقاط: ${s.pts||0} · شارة: ${esc(s.badge||"تلقائي")}</div>
+    <div class="row" style="margin-top:8px">
+      <input style="max-width:90px" id="pts_${s.id}" type="number" value="${s.pts||0}">
+      <select id="bdg_${s.id}">
+        <option value="">تلقائي</option>
+        ${["مبتدئ","مجتهد","منتظم","ملتزم","نجم الجيم","أسطوري"].map(x=>`<option ${s.badge===x?"selected":""}>${x}</option>`).join("")}
+      </select>
+      <button class="btn" type="button" onclick="saveMem('${s.id}')">حفظ الملف</button>
+      ${waBtn(s.phone,"تم تأكيد الاشتراك باسم "+(s.name||"")+" والكود "+(s.code||""))}
+      <button class="btn ghost" type="button" onclick="toggleSub('${s.id}')">${s.active===false?"تشغيل":"إيقاف"}</button>
+      <button class="btn bad" type="button" onclick="delSub('${s.id}')">حذف نهائي</button>
+    </div>
+  </div>`).join("")||"<div class='hint'>مفيش مشتركين</div>";
+}
+function saveMem(id){
+  const s=DB.subs.find(x=>String(x.id)===String(id)); if(!s) return alert("المشترك مش موجود");
+  s.pts=+$("pts_"+id).value||0;
+  s.badge=$("bdg_"+id).value;
+  REF().child("progress/"+id).update({pts:s.pts,badge:s.badge||null});
+  REF().child("notifs/"+id).push({text:"تم تحديث ملفك: نقاط "+s.pts+(s.badge?" · شارة "+s.badge:""),at:Date.now(),read:false});
+  saveOne(s).then(()=>{alert("اتحفظ ملف المشترك ووصل للمنصة"); paintList();});
+}
+function toggleSub(id){
+  const s=DB.subs.find(x=>String(x.id)===String(id)); if(!s) return;
+  s.active=s.active===false; saveOne(s).then(paintList);
+}
+function delSub(id){
+  const s=DB.subs.find(x=>String(x.id)===String(id));
+  if(!s) return;
+  if(!confirm("حذف حساب "+(s.name||"")+" نهائي؟")) return;
+  DB.subs=DB.subs.filter(x=>String(x.id)!==String(id));
+  REF().child("subs/"+id).remove().then(function(){
+    REF().child("progress/"+id).remove();
+    paintList(); paint(); alert("اتحذف الحساب");
+  });
+}
+
+function addSub(){
+  const created=Date.now();
+  const s=applyPack({
+    id:"s"+created,name:$("nName").value,phone:$("nPhone").value,code:$("nCode").value||genCode(),
+    gender:$("nGender").value,weight:$("nW").value,height:$("nH").value,age:$("nA").value,
+    active:true,created,pts:0
+  }, $("nPack").value, $("nPaid").value, $("nRemain").value);
+  DB.subs.push(s); saveSubs().then(()=>{alert("اتضاف · الكود "+s.code); paint(); paintList();});
+}
+
+function loadReqs(){
+  firebase.database().ref("platform/requests").once("value").then(snap=>{
+    const val=snap.val()||{};
+    const keys=Object.keys(val).sort((a,b)=>(val[b].at||0)-(val[a].at||0));
+    $("cReq").textContent=keys.filter(k=>val[k].status==="pending"||!val[k].status).length;
+    const pending=keys.filter(k=>!val[k].status||val[k].status==="pending");
+    $("reqRows").innerHTML=pending.map(k=>{
+      const r=val[k];
+      return `<div class="sub-card"><b>${esc(r.name)}</b><div class="hint">${esc(r.phone)} · ${esc(r.gender)} · ${esc(r.package)}</div>
+      <div class="row"><button class="btn" type="button" onclick="acceptReq('${k}')">قبول</button>
+      <button class="btn bad" type="button" onclick="rejectReq('${k}')">رفض</button>
+      ${waBtn(r.phone,"تم تأكيد الاشتراك باسم "+(r.name||"")+" والكود هيتبعت بعد القبول")}</div></div>`;
+    }).join("")||"<div class='hint'>مفيش طلبات جديدة</div>";
+  });
+}
+function acceptReq(key){
+  firebase.database().ref("platform/requests/"+key).once("value").then(snap=>{
+    const r=snap.val(); if(!r) return;
+    const created=Date.now();
+    const code=genCode();
+    DB.subs.push(applyPack({id:"s"+created,name:r.name,phone:r.phone,code,gender:r.gender,weight:r.weight,height:r.height,age:r.age,active:true,created,fromReq:key}, r.package||"الباقة الشهرية", 0, r.price||0));
+    saveOne(DB.subs[DB.subs.length-1]).then(()=>{
+      firebase.database().ref("platform/requests/"+key).remove();
+      firebase.database().ref("platform/notifs/s"+created).push({text:"تم قبول اشتراكك. كودك: "+code,at:Date.now()});
+      const href=waHref(r.phone,"تم تأكيد الاشتراك باسم "+(r.name||"")+" والكود "+code);
+      alert("اتقبل. الكود: "+code);
+      loadReqs(); paint();
+      if(confirm("فتح واتساب لتبعتله التأكيد؟")) location.href=href;
+    });
+  });
+}
+function rejectReq(key){firebase.database().ref("platform/requests/"+key).remove().then(loadReqs);}
+
+function loadPayReqs(){
+  firebase.database().ref("platform/payReqs").once("value").then(snap=>{
+    const val=snap.val()||{};
+    const keys=Object.keys(val).sort((a,b)=>(val[b].at||0)-(val[a].at||0));
+    const wait=keys.filter(k=>(val[k].status||"pending")!=="paid");
+    const done=keys.filter(k=>(val[k].status||"") ==="paid");
+    const card=k=>{
+      const r=val[k];
+      const msg="تحويل من العميل "+(r.name||"")+" بكود "+(r.code||"-")+" مبلغ "+(r.amt||0)+" جنيه من الرقم "+(r.from||r.phone||"-")+" باقة "+(r.package||"");
+      const paidNote=r.status==="paid"?"<div class='hint'>الرقم "+esc(r.from||r.phone||"-")+" حوّل "+esc(r.amt||0)+"ج واشترك في "+esc(r.package||"-")+"</div>":"";
+      return `<div class="sub-card ${r.status==="paid"?"paid-mini":""}"><b>${esc(r.name)}</b>
+        <div class="hint">${esc(r.method)} · ${esc(r.amt)}ج · من ${esc(r.from||"-")} · ${esc(r.package)}</div>
+        ${paidNote}
+        ${r.status==="paid"?"":(r.shot?`<img class="thumb" src="${r.shot}">`:"")}
+        <div class="row">${r.status==="paid"?"":`<button class="btn" type="button" onclick="okPay('${k}','${r.sid||""}','${r.amt||0}')">تأكيد الاستلام</button>`}
+        ${waBtn(r.phone||r.from,msg)}</div></div>`;
+    };
+    $("payReqRows").innerHTML=(wait.map(card).join("")||"<div class='hint'>مفيش تحويلات جديدة</div>")+
+      (done.length?`<h3 style="margin-top:16px">اشتركوا وتم التحويل</h3><div class="paid-wrap">`+done.map(card).join("")+"</div>":"");
+  });
+}
+function okPay(key,sid,amt){
+  firebase.database().ref("platform/payReqs/"+key+"/status").set("paid");
+  const s=DB.subs.find(x=>x.id===sid);
+  if(s){ s.paid=(+s.paid||0)+(+amt||0); s.remain=Math.max(0,(+s.remain||0)-(+amt||0)); saveSubs(); }
+  loadPayReqs();
+}
+function paintPay(){
+  const packs=["تجربة 3 أيام","الباقة الشهرية","باقة 3 شهور","باقة 6 شهور","الباقة السنوية"];
+  $("payRows").innerHTML=(DB.subs||[]).map(s=>`<div class="sub-card"><b>${esc(s.name)}</b> · ${esc(s.code)}
+    <label>الباقة</label>
+    <select id="pk_${s.id}">${packs.map(p=>`<option ${s.package===p?"selected":""}>${p}</option>`).join("")}</select>
+    <div class="row">
+      <div style="flex:1"><label>مدفوع</label><input id="pd_${s.id}" type="number" value="${s.paid||0}"></div>
+      <div style="flex:1"><label>باقي</label><input id="rm_${s.id}" type="number" value="${s.remain||0}"></div>
+    </div>
+    <button class="btn" type="button" onclick="savePay('${s.id}')">حفظ الدفع</button>
+  </div>`).join("")||"<div class='hint'>مفيش مشتركين</div>";
+}
+function savePay(id){
+  const s=DB.subs.find(x=>x.id===id); if(!s) return;
+  applyPack(s, $("pk_"+id).value, $("pd_"+id).value, $("rm_"+id).value);
+  saveOne(s).then(()=>{alert("اتحفظ الدفع"); paintPay(); paint();});
+}
+function filteredSubs(){
+  const q=(($("qSub")||{}).value||"").trim().toLowerCase();
+  const pack=(($("fPack")||{}).value||"");
+  const gen=(($("fGen")||{}).value||"");
+  const debt=(($("fDebt")||{}).value||"");
+  return (DB.subs||[]).filter(s=>{
+    const blob=((s.name||"")+" "+(s.code||"")+" "+(s.phone||"")).toLowerCase();
+    if(q && blob.indexOf(q)<0) return false;
+    if(pack && String(s.package||"")!==pack) return false;
+    if(gen && String(s.gender||"")!==gen) return false;
+    const owe=(+s.remain||0)>0;
+    if(debt==="debt" && !owe) return false;
+    if(debt==="clear" && owe) return false;
+    return true;
+  });
+}
+function paintData(){
+  const rows=filteredSubs();
+  $("dataRows").innerHTML=rows.map(s=>`<div class="sub-card">
+    <div class="row" style="justify-content:space-between;align-items:center" onclick="toggleMem('${s.id}')">
+      <div><b>${esc(s.name||"-")}</b><div class="hint">${esc(s.code||"")} · ${esc(s.package||"")} · باقي ${s.remain||0}</div></div>
+      <button class="btn ghost" type="button">فتح</button>
+    </div>
+    <div id="box_${s.id}" style="display:none;margin-top:10px">
+      <input id="dn_${s.id}" value="${esc(s.name||"")}">
+      <input id="dp_${s.id}" value="${esc(s.phone||"")}" placeholder="الموبايل">
+      <input id="dc_${s.id}" value="${esc(s.code||"")}" placeholder="الكود">
+      <select id="dg_${s.id}"><option value="boy" ${s.gender==="boy"?"selected":""}>Boy</option><option value="girl" ${s.gender==="girl"?"selected":""}>Girl</option></select>
+      <div class="row">
+        <input id="dw_${s.id}" type="number" value="${s.weight||""}" placeholder="وزن">
+        <input id="dh_${s.id}" type="number" value="${s.height||""}" placeholder="طول">
+        <input id="da_${s.id}" type="number" value="${s.age||""}" placeholder="سن">
+      </div>
+      <div class="row"><button class="btn" type="button" onclick="saveData('${s.id}')">حفظ البيانات</button>
+      ${waBtn(s.phone,"تم تأكيد الاشتراك باسم "+(s.name||"")+" والكود "+(s.code||""))}</div>
+    </div>
+  </div>`).join("")||"<div class='hint'>مفيش نتائج</div>";
+}
+function toggleMem(id){
+  const el=$("box_"+id); if(!el) return;
+  el.style.display=el.style.display==="none"?"block":"none";
+}
+function saveData(id){
+  const s=DB.subs.find(x=>String(x.id)===String(id)); if(!s) return alert("المشترك مش موجود");
+  s.name=$("dn_"+id).value; s.phone=$("dp_"+id).value; s.code=$("dc_"+id).value;
+  s.gender=$("dg_"+id).value; s.weight=$("dw_"+id).value; s.height=$("dh_"+id).value; s.age=$("da_"+id).value;
+  saveOne(s).then(()=>{alert("اتحفظت البيانات"); paintData();});
+}
+
+function fillShop(){
+  const offs=DB.offers||[];
+  $("shopEdit").innerHTML=offs.map((o,i)=>`<div class="row"><input id="op${i}" type="number" value="${o.pts}"><input id="of${i}" type="number" value="${o.off}"></div>`).join("")+
+    `<button class="btn" type="button" onclick="saveOffers()">حفظ الخصومات</button>`;
+  firebase.database().ref("platform/redeems").once("value").then(snap=>{
+    const v=snap.val()||{};
+    const keys=Object.keys(v).sort((a,b)=>(v[b].at||0)-(v[a].at||0));
+    $("redeemRows").innerHTML=keys.map(k=>{
+      const r=v[k];
+      const st=r.status||"pending";
+      const wait=st==="pending";
+      return `<div class="sub-card"><b>طلب استبدال</b>
+        <div class="hint">الاسم: ${esc(r.name||"-")} · الكود: ${esc(r.code||"-")}<br>خصم ${esc(r.off)}٪ مقابل ${esc(r.pts)} نقطة · الحالة: ${esc(st)}</div>
+        ${wait?`<div class="row">
+          <button class="btn" type="button" onclick="okRedeem('${k}')">تأكيد</button>
+          <button class="btn bad" type="button" onclick="noRedeem('${k}')">إلغاء</button>
+        </div>`:""}
+      </div>`;
+    }).join("")||"<div class='hint'>مفيش استبدال</div>";
+  });
+}
+function okRedeem(key){
+  firebase.database().ref("platform/redeems/"+key).once("value").then(function(snap){
+    const r=snap.val(); if(!r) return;
+    if(r.status && r.status!=="pending") return alert("الطلب مش معلق");
+    const id=r.sid||r.id;
+    const s=DB.subs.find(x=>String(x.id)===String(id));
+    const nowPts=s?Math.max(0,(+s.pts||0)-(+r.pts||0)):null;
+    firebase.database().ref("platform/redeems/"+key).update({status:"confirmed",okAt:Date.now()});
+    if(s){
+      s.pts=nowPts; s.pendingDiscount=r.off;
+      saveOne(s);
+      REF().child("progress/"+id).update({pts:nowPts});
+    } else if(id){
+      REF().child("progress/"+id+"/pts").once("value").then(ps=>{
+        const cur=+(ps.val()||0);
+        REF().child("progress/"+id+"/pts").set(Math.max(0,cur-(+r.pts||0)));
+      });
+    }
+    if(id) REF().child("notifs/"+id).push({text:"تم تأكيد الاستبدال: خصم "+(r.off||0)+"٪ مقابل "+(r.pts||0)+" نقطة",at:Date.now(),read:false});
+    alert("اتأكد الاستبدال واتخصمت النقاط");
+    fillShop(); paintList();
+  });
+}
+function noRedeem(key){
+  firebase.database().ref("platform/redeems/"+key).once("value").then(function(snap){
+    const r=snap.val()||{};
+    firebase.database().ref("platform/redeems/"+key).update({status:"cancelled",okAt:Date.now()});
+    const id=r.sid||r.id;
+    if(id) REF().child("notifs/"+id).push({text:"اتلغى طلب استبدال النقاط",at:Date.now(),read:false});
+    fillShop();
+  });
+}
+function saveOffers(){
+  const arr=[0,1,2,3].map(i=>({pts:+$("op"+i).value||0,off:+$("of"+i).value||0})).filter(x=>x.pts&&x.off);
+  DB.offers=arr; REF().child("offers").set(arr).then(()=>alert("اتحفظ المتجر"));
+}
+
+function loadChats(){
+  firebase.database().ref("platform/chats").once("value").then(snap=>{
+    const v=snap.val()||{};
+    $("chatList").innerHTML=Object.keys(v).map(id=>{
+      const c=v[id];
+      return `<div class="sub-card" onclick="openChat('${id}')"><b>${esc(c.name||id)}</b><div class="hint">${esc(c.phone||"")} · ${esc(c.code||"")}</div></div>`;
+    }).join("")||"<div class='hint'>مفيش شات</div>";
+  });
+}
+function openChat(id){
+  CHAT_SID=id; $("chatThread").style.display="block";
+  firebase.database().ref("platform/chats/"+id+"/messages").limitToLast(80).on("value",snap=>{
+    const val=snap.val()||{};
+    const arr=Object.keys(val).map(k=>val[k]).sort((a,b)=>(a.at||0)-(b.at||0));
+    $("chatWho").textContent="الدردشة مع "+id;
+    $("chatMsgs").innerHTML=arr.map(m=>`<div style="margin:6px 0;padding:8px;border-radius:10px;background:${m.from==="admin"?"#3b0a12":"#1a1a1a"}">${esc(m.text)}<div class="hint">${m.from==="admin"?"الكابتن":"العميل"}</div></div>`).join("");
+  });
+}
+function sendAdminChat(){
+  const t=$("adminChat").value.trim(); if(!t||!CHAT_SID) return;
+  firebase.database().ref("platform/chats/"+CHAT_SID+"/messages").push({from:"admin",text:t,at:Date.now()});
+  firebase.database().ref("platform/notifs/"+CHAT_SID).push({text:t,at:Date.now()});
+  $("adminChat").value="";
+}
+
+function loadFollow(){
+  firebase.database().ref("platform/follows").once("value").then(snap=>{
+    const v=snap.val()||{};
+    $("followRows").innerHTML=Object.keys(v).map(id=>{
+      const f=v[id]||{};
+      return `<div class="sub-card"><b>${esc(id)}</b><div class="hint">وزن: ${esc(f.w||"-")}</div>${f.shot?`<img class="thumb" src="${f.shot}">`:""}</div>`;
+    }).join("")||"<div class='hint'>مفيش متابعات</div>";
+  });
+}
+
+function savePass(){
+  const v=$("newPass").value.trim(); if(!v) return alert("اكتب الكود");
+  REF().child("sec/pass").set(v).then(()=>alert("اتغير كود الأدمن"));
+}
+</script>
+</body>
+</html>
