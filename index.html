@@ -44,6 +44,8 @@ input,select,textarea{width:100%;background:#0e0a0b;border:1px solid var(--line)
 table{width:100%;border-collapse:collapse}
 th,td{padding:8px;border-bottom:1px solid var(--line);text-align:right;font-size:.9rem}
 .thumb{width:100%;max-height:140px;object-fit:cover;border-radius:10px;margin:6px 0}
+.paid-wrap{display:flex;flex-wrap:wrap;gap:8px}
+.paid-mini{flex:1 1 46%;padding:10px;font-size:13px}
 
   .side{position:sticky;top:0;z-index:20;height:auto;max-height:none;overflow:visible;background:#10080a;border-left:0;border-bottom:1px solid var(--line);padding:8px 10px}
   .nav{display:flex;flex-wrap:nowrap;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px}
@@ -219,10 +221,15 @@ function applyPack(s,pack,paid,remain){
   s.expiresAt=Date.now()+ms; return s;
 }
 
+function asList(subs){
+  if(Array.isArray(subs)) return subs.filter(Boolean);
+  if(subs && typeof subs==="object") return Object.keys(subs).map(k=>Object.assign({id:subs[k]&&subs[k].id?subs[k].id:k}, subs[k]||{}));
+  return [];
+}
 function loadRemote(cb){
   REF().once("value").then(snap=>{
     const v=snap.val()||{};
-    DB.subs=v.subs||[];
+    DB.subs=asList(v.subs);
     DB.offers=v.offers||DB.offers;
     DB.site=v;
     if(cb) cb(v);
@@ -230,7 +237,21 @@ function loadRemote(cb){
   });
 }
 function saveSubs(){
-  return REF().child("subs").set(DB.subs);
+  const obj={};
+  (DB.subs||[]).forEach(s=>{ if(s&&s.id) obj[s.id]=s; });
+  return REF().child("subs").set(obj);
+}
+function saveOne(s){
+  if(!s||!s.id) return Promise.resolve();
+  const i=DB.subs.findIndex(x=>x.id===s.id);
+  if(i>=0) DB.subs[i]=s; else DB.subs.push(s);
+  return REF().child("subs/"+s.id).set(s);
+}
+function waNum(p){return String(p||"").replace(/\D/g,"").replace(/^0/,"20");}
+function waHref(phone,text){return "https://api.whatsapp.com/send?phone="+waNum(phone)+"&text="+encodeURIComponent(text);}
+function waBtn(phone,text){
+  if(!phone) return "";
+  return `<a class="btn" style="background:#25d366;min-width:44px" href="${waHref(phone,text)}" target="_blank">واتساب</a>`;
 }
 
 function login(){
@@ -257,7 +278,7 @@ function startAlerts(){
   if(!window.Notification) return;
   Notification.requestPermission();
   if("serviceWorker" in navigator){
-    navigator.serviceWorker.register("./admin-sw.js").catch(function(){});
+    navigator.serviceWorker.register("./sw.js").catch(function(){});
   }
   const seen=JSON.parse(localStorage.getItem("gh_seen")||"{}");
   function watch(path,title,textFn){
@@ -340,16 +361,18 @@ function paintList(){
         ${["مبتدئ","مجتهد","منتظم","ملتزم","نجم الجيم","أسطوري"].map(x=>`<option ${s.badge===x?"selected":""}>${x}</option>`).join("")}
       </select>
       <button class="btn" type="button" onclick="saveMem('${s.id}')">حفظ الملف</button>
+      ${waBtn(s.phone,"تم تأكيد الاشتراك باسم "+(s.name||"")+" والكود "+(s.code||""))}
       <button class="btn ghost" type="button" onclick="toggleSub('${s.id}')">${s.active===false?"تشغيل":"إيقاف"}</button>
     </div>
   </div>`).join("")||"<div class='hint'>مفيش مشتركين</div>";
 }
 function saveMem(id){
-  const s=DB.subs.find(x=>x.id===id); if(!s) return;
+  const s=DB.subs.find(x=>String(x.id)===String(id)); if(!s) return alert("المشترك مش موجود");
   s.pts=+$("pts_"+id).value||0;
   s.badge=$("bdg_"+id).value;
-  REF().child("progress/"+id+"/pts").set(s.pts);
-  saveSubs().then(()=>alert("اتحفظ ملف المشترك"));
+  REF().child("progress/"+id).update({pts:s.pts,badge:s.badge||null});
+  REF().child("notifs/"+id).push({text:"تم تحديث ملفك: نقاط "+s.pts+(s.badge?" · شارة "+s.badge:""),at:Date.now(),read:false});
+  saveOne(s).then(()=>{alert("اتحفظ ملف المشترك ووصل للمنصة"); paintList();});
 }
 function toggleSub(id){
   const s=DB.subs.find(x=>x.id===id); if(!s) return;
@@ -371,12 +394,14 @@ function loadReqs(){
     const val=snap.val()||{};
     const keys=Object.keys(val).sort((a,b)=>(val[b].at||0)-(val[a].at||0));
     $("cReq").textContent=keys.filter(k=>val[k].status==="pending"||!val[k].status).length;
-    $("reqRows").innerHTML=keys.map(k=>{
+    const pending=keys.filter(k=>!val[k].status||val[k].status==="pending");
+    $("reqRows").innerHTML=pending.map(k=>{
       const r=val[k];
-      return `<div class="sub-card"><b>${esc(r.name)}</b><div class="hint">${esc(r.phone)} · ${esc(r.gender)} · ${esc(r.package)} · ${esc(r.status||"pending")}</div>
+      return `<div class="sub-card"><b>${esc(r.name)}</b><div class="hint">${esc(r.phone)} · ${esc(r.gender)} · ${esc(r.package)}</div>
       <div class="row"><button class="btn" type="button" onclick="acceptReq('${k}')">قبول</button>
-      <button class="btn bad" type="button" onclick="rejectReq('${k}')">رفض</button></div></div>`;
-    }).join("")||"<div class='hint'>مفيش طلبات</div>";
+      <button class="btn bad" type="button" onclick="rejectReq('${k}')">رفض</button>
+      ${waBtn(r.phone,"تم تأكيد الاشتراك باسم "+(r.name||"")+" والكود هيتبعت بعد القبول")}</div></div>`;
+    }).join("")||"<div class='hint'>مفيش طلبات جديدة</div>";
   });
 }
 function acceptReq(key){
@@ -385,25 +410,37 @@ function acceptReq(key){
     const created=Date.now();
     const code=genCode();
     DB.subs.push(applyPack({id:"s"+created,name:r.name,phone:r.phone,code,gender:r.gender,weight:r.weight,height:r.height,age:r.age,active:true,created,fromReq:key}, r.package||"الباقة الشهرية", 0, r.price||0));
-    saveSubs().then(()=>{
-      firebase.database().ref("platform/requests/"+key+"/status").set("accepted");
+    saveOne(DB.subs[DB.subs.length-1]).then(()=>{
+      firebase.database().ref("platform/requests/"+key).remove();
       firebase.database().ref("platform/notifs/s"+created).push({text:"تم قبول اشتراكك. كودك: "+code,at:Date.now()});
-      alert("اتقبل. الكود: "+code); loadReqs(); paint();
+      const href=waHref(r.phone,"تم تأكيد الاشتراك باسم "+(r.name||"")+" والكود "+code);
+      alert("اتقبل. الكود: "+code);
+      loadReqs(); paint();
+      if(confirm("فتح واتساب لتبعتله التأكيد؟")) location.href=href;
     });
   });
 }
-function rejectReq(key){firebase.database().ref("platform/requests/"+key+"/status").set("rejected").then(loadReqs);}
+function rejectReq(key){firebase.database().ref("platform/requests/"+key).remove().then(loadReqs);}
 
 function loadPayReqs(){
   firebase.database().ref("platform/payReqs").once("value").then(snap=>{
     const val=snap.val()||{};
     const keys=Object.keys(val).sort((a,b)=>(val[b].at||0)-(val[a].at||0));
-    $("payReqRows").innerHTML=keys.map(k=>{
+    const wait=keys.filter(k=>(val[k].status||"pending")!=="paid");
+    const done=keys.filter(k=>(val[k].status||"") ==="paid");
+    const card=k=>{
       const r=val[k];
-      return `<div class="sub-card"><b>${esc(r.name)}</b><div class="hint">${esc(r.method)} · ${esc(r.amt)}ج · من ${esc(r.from)} · ${esc(r.ref)} · ${esc(r.package)} · ${esc(r.status)}</div>
-      ${r.shot?`<img class="thumb" src="${r.shot}">`:""}
-      <button class="btn" type="button" onclick="okPay('${k}','${r.sid||""}','${r.amt||0}')">تأكيد الاستلام</button></div>`;
-    }).join("")||"<div class='hint'>مفيش تحويلات</div>";
+      const msg="تحويل من العميل "+(r.name||"")+" بكود "+(r.code||"-")+" مبلغ "+(r.amt||0)+" جنيه من الرقم "+(r.from||r.phone||"-")+" باقة "+(r.package||"");
+      const paidNote=r.status==="paid"?"<div class='hint'>الرقم "+esc(r.from||r.phone||"-")+" حوّل "+esc(r.amt||0)+"ج واشترك في "+esc(r.package||"-")+"</div>":"";
+      return `<div class="sub-card ${r.status==="paid"?"paid-mini":""}"><b>${esc(r.name)}</b>
+        <div class="hint">${esc(r.method)} · ${esc(r.amt)}ج · من ${esc(r.from||"-")} · ${esc(r.package)}</div>
+        ${paidNote}
+        ${r.status==="paid"?"":(r.shot?`<img class="thumb" src="${r.shot}">`:"")}
+        <div class="row">${r.status==="paid"?"":`<button class="btn" type="button" onclick="okPay('${k}','${r.sid||""}','${r.amt||0}')">تأكيد الاستلام</button>`}
+        ${waBtn(r.phone||r.from,msg)}</div></div>`;
+    };
+    $("payReqRows").innerHTML=(wait.map(card).join("")||"<div class='hint'>مفيش تحويلات جديدة</div>")+
+      (done.length?`<h3 style="margin-top:16px">اشتركوا وتم التحويل</h3><div class="paid-wrap">`+done.map(card).join("")+"</div>":"");
   });
 }
 function okPay(key,sid,amt){
@@ -427,7 +464,7 @@ function paintPay(){
 function savePay(id){
   const s=DB.subs.find(x=>x.id===id); if(!s) return;
   applyPack(s, $("pk_"+id).value, $("pd_"+id).value, $("rm_"+id).value);
-  saveSubs().then(()=>{alert("اتحفظ الدفع"); paintPay(); paint();});
+  saveOne(s).then(()=>{alert("اتحفظ الدفع"); paintPay(); paint();});
 }
 function filteredSubs(){
   const q=(($("qSub")||{}).value||"").trim().toLowerCase();
@@ -462,7 +499,8 @@ function paintData(){
         <input id="dh_${s.id}" type="number" value="${s.height||""}" placeholder="طول">
         <input id="da_${s.id}" type="number" value="${s.age||""}" placeholder="سن">
       </div>
-      <button class="btn" type="button" onclick="saveData('${s.id}')">حفظ البيانات</button>
+      <div class="row"><button class="btn" type="button" onclick="saveData('${s.id}')">حفظ البيانات</button>
+      ${waBtn(s.phone,"تم تأكيد الاشتراك باسم "+(s.name||"")+" والكود "+(s.code||""))}</div>
     </div>
   </div>`).join("")||"<div class='hint'>مفيش نتائج</div>";
 }
@@ -471,10 +509,10 @@ function toggleMem(id){
   el.style.display=el.style.display==="none"?"block":"none";
 }
 function saveData(id){
-  const s=DB.subs.find(x=>x.id===id); if(!s) return;
+  const s=DB.subs.find(x=>String(x.id)===String(id)); if(!s) return alert("المشترك مش موجود");
   s.name=$("dn_"+id).value; s.phone=$("dp_"+id).value; s.code=$("dc_"+id).value;
   s.gender=$("dg_"+id).value; s.weight=$("dw_"+id).value; s.height=$("dh_"+id).value; s.age=$("da_"+id).value;
-  saveSubs().then(()=>{alert("اتحفظت البيانات"); paintData();});
+  saveOne(s).then(()=>{alert("اتحفظت البيانات"); paintData();});
 }
 
 function fillShop(){
