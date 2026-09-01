@@ -293,6 +293,7 @@ function startAlerts(){
   }
   watch("platform/requests","طلب اشتراك جديد", v=>(v.name||"عميل")+" · "+(v.package||"")+" · "+(v.phone||""));
   watch("platform/payReqs","طلب تحويل جديد", v=>(v.name||"عميل")+" حوّل "+(v.amt||0)+"ج · "+(v.method||""));
+  watch("platform/redeems","طلب استبدال نقاط", v=>(v.name||"عميل")+" · كود "+(v.code||"-")+" · "+(v.pts||0)+" نقطة");
 }
 if(sessionStorage.getItem("ykAdmin")==="1") openApp();
 
@@ -363,6 +364,7 @@ function paintList(){
       <button class="btn" type="button" onclick="saveMem('${s.id}')">حفظ الملف</button>
       ${waBtn(s.phone,"تم تأكيد الاشتراك باسم "+(s.name||"")+" والكود "+(s.code||""))}
       <button class="btn ghost" type="button" onclick="toggleSub('${s.id}')">${s.active===false?"تشغيل":"إيقاف"}</button>
+      <button class="btn bad" type="button" onclick="delSub('${s.id}')">حذف نهائي</button>
     </div>
   </div>`).join("")||"<div class='hint'>مفيش مشتركين</div>";
 }
@@ -375,8 +377,18 @@ function saveMem(id){
   saveOne(s).then(()=>{alert("اتحفظ ملف المشترك ووصل للمنصة"); paintList();});
 }
 function toggleSub(id){
-  const s=DB.subs.find(x=>x.id===id); if(!s) return;
-  s.active=s.active===false; saveSubs().then(paintList);
+  const s=DB.subs.find(x=>String(x.id)===String(id)); if(!s) return;
+  s.active=s.active===false; saveOne(s).then(paintList);
+}
+function delSub(id){
+  const s=DB.subs.find(x=>String(x.id)===String(id));
+  if(!s) return;
+  if(!confirm("حذف حساب "+(s.name||"")+" نهائي؟")) return;
+  DB.subs=DB.subs.filter(x=>String(x.id)!==String(id));
+  REF().child("subs/"+id).remove().then(function(){
+    REF().child("progress/"+id).remove();
+    paintList(); paint(); alert("اتحذف الحساب");
+  });
 }
 
 function addSub(){
@@ -521,9 +533,51 @@ function fillShop(){
     `<button class="btn" type="button" onclick="saveOffers()">حفظ الخصومات</button>`;
   firebase.database().ref("platform/redeems").once("value").then(snap=>{
     const v=snap.val()||{};
-    $("redeemRows").innerHTML=Object.keys(v).map(k=>{
-      const r=v[k]; return `<div class="sub-card">${esc(r.name||r.sid)} · ${r.off||0}% · ${r.pts||0} نقطة</div>`;
+    const keys=Object.keys(v).sort((a,b)=>(v[b].at||0)-(v[a].at||0));
+    $("redeemRows").innerHTML=keys.map(k=>{
+      const r=v[k];
+      const st=r.status||"pending";
+      const wait=st==="pending";
+      return `<div class="sub-card"><b>طلب استبدال</b>
+        <div class="hint">الاسم: ${esc(r.name||"-")} · الكود: ${esc(r.code||"-")}<br>خصم ${esc(r.off)}٪ مقابل ${esc(r.pts)} نقطة · الحالة: ${esc(st)}</div>
+        ${wait?`<div class="row">
+          <button class="btn" type="button" onclick="okRedeem('${k}')">تأكيد</button>
+          <button class="btn bad" type="button" onclick="noRedeem('${k}')">إلغاء</button>
+        </div>`:""}
+      </div>`;
     }).join("")||"<div class='hint'>مفيش استبدال</div>";
+  });
+}
+function okRedeem(key){
+  firebase.database().ref("platform/redeems/"+key).once("value").then(function(snap){
+    const r=snap.val(); if(!r) return;
+    if(r.status && r.status!=="pending") return alert("الطلب مش معلق");
+    const id=r.sid||r.id;
+    const s=DB.subs.find(x=>String(x.id)===String(id));
+    const nowPts=s?Math.max(0,(+s.pts||0)-(+r.pts||0)):null;
+    firebase.database().ref("platform/redeems/"+key).update({status:"confirmed",okAt:Date.now()});
+    if(s){
+      s.pts=nowPts; s.pendingDiscount=r.off;
+      saveOne(s);
+      REF().child("progress/"+id).update({pts:nowPts});
+    } else if(id){
+      REF().child("progress/"+id+"/pts").once("value").then(ps=>{
+        const cur=+(ps.val()||0);
+        REF().child("progress/"+id+"/pts").set(Math.max(0,cur-(+r.pts||0)));
+      });
+    }
+    if(id) REF().child("notifs/"+id).push({text:"تم تأكيد الاستبدال: خصم "+(r.off||0)+"٪ مقابل "+(r.pts||0)+" نقطة",at:Date.now(),read:false});
+    alert("اتأكد الاستبدال واتخصمت النقاط");
+    fillShop(); paintList();
+  });
+}
+function noRedeem(key){
+  firebase.database().ref("platform/redeems/"+key).once("value").then(function(snap){
+    const r=snap.val()||{};
+    firebase.database().ref("platform/redeems/"+key).update({status:"cancelled",okAt:Date.now()});
+    const id=r.sid||r.id;
+    if(id) REF().child("notifs/"+id).push({text:"اتلغى طلب استبدال النقاط",at:Date.now(),read:false});
+    fillShop();
   });
 }
 function saveOffers(){
@@ -557,7 +611,7 @@ function sendAdminChat(){
 }
 
 function loadFollow(){
-  firebase.database().ref("platform/follow").once("value").then(snap=>{
+  firebase.database().ref("platform/follows").once("value").then(snap=>{
     const v=snap.val()||{};
     $("followRows").innerHTML=Object.keys(v).map(id=>{
       const f=v[id]||{};
